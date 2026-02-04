@@ -17,11 +17,21 @@ class MlcFetchAllCachedServices
     private static function getSrcDir(): string
     {
         $currentDir = dirname(__DIR__);
-        //remove segments until we reach "src"
-        while (basename($currentDir) !== 'src') {
+
+        $currentDir = __DIR__;
+        // Traverse up until we find the "vendor" directory
+        while (basename($currentDir) !== 'vendor') {
             $currentDir = dirname($currentDir);
         }
-        return $currentDir;
+        // Now go up one more level to get to the root of the project
+        $currentDir = dirname($currentDir);
+
+        $sourceDir = $currentDir.'/src';
+
+        if (!is_dir($sourceDir)) {
+            throw new RuntimeException("Source directory '$sourceDir' not found.");
+        }
+        return $sourceDir;
     }
 
     /**
