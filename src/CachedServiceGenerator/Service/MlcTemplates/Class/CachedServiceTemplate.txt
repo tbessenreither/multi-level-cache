@@ -1,0 +1,146 @@
+<?php
+
+declare(strict_types=1);
+
+namespace /*{ServiceNamespace}*/;
+
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachableMethod;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachedService;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
+use ReflectionMethod;
+use Robinson\Common\MultiLevelCache\Factory\MultiLevelCacheFactory;
+use Robinson\Common\MultiLevelCache\Service\MultiLevelCacheService;
+use /*{InterfaceClass}*/;
+
+/**
+* Cache enabled wrapper for Service /*{ServiceName}*/.
+*
+* This Wrapper provides all public methods from the origin service and was generated using the `mlc:make-cached-service` command
+*
+* You can regenerate/update using `php bin/console mlc:make-cached-service /*{classDotSeparated}*/`
+* @codeCoverageIgnore
+*/
+#[MlcCachedService(
+    originalServiceClass: /*{ServiceName}*/::class,
+    allowSync: true,
+)]
+class /*{ServiceName}*/Cached implements /*{InterfaceClassName}*/
+{
+    /**
+    * @var int[]
+    */
+    private array $ttlPerMethod = [];
+    /**
+     * @var callable[]
+     */
+    private array $keyGeneratorPerMethod = [];
+    /**
+     * @var ReflectionMethod[]
+     */
+    private array $reflectionMethodCache = [];
+    private string $instanceClass;
+    private string $cacheKeyPrefix;
+    private MultiLevelCacheService $cache;
+    private int $defaultTtlSeconds = /*{DefaultTtlSeconds}*/;
+
+    public function __construct(
+        MultiLevelCacheFactory $multiLevelCacheFactory,
+        private /*{ServiceName}*/ $instance,
+    ) {
+        $this->instanceClass = $this->instance::class;
+
+        $this->cacheKeyPrefix = 'CachedService:'.str_replace('\\', '_', $this->instanceClass);
+
+        $cacheGroupName = strtolower('mlc_cachedService_'.str_replace('\\', '-', $this->instanceClass));
+
+        $this->cache = $multiLevelCacheFactory->createDefault2LevelCache(
+            inMemoryCacheMaxSize: 100,
+            writeL0OnSet: true,
+            cacheGroupName: $cacheGroupName,
+        );
+    }
+
+    // Start Dynamically generated methods
+
+/*{DynamicMethods}*/
+
+    // End Dynamically generated methods
+
+    private function callCachedMethod(string $name, array $args, bool $isStatic): mixed
+    {
+        $ttl = $this->getTtlForMethod($name);
+
+        if($ttl === 0) {
+            return $this->instance->$name(...$args);
+        }
+
+        return $this->cache->get(
+            key: $this->getCacheKeyForMethodCallObject(new MethodCallObject($name, $args)),
+            callable: fn () => $isStatic ? ($this->instanceClass)::{$name}(...$args) : $this->instance->$name(...$args),
+            ttlSeconds: $this->getTtlForMethod($name),
+        );
+    }
+
+    private function getMethodReflection(string $methodName): ReflectionMethod
+    {
+        if(!array_key_exists($methodName, $this->reflectionMethodCache)) {
+            $this->reflectionMethodCache[$methodName] = new ReflectionMethod($this->instance, $methodName);
+        }
+        return $this->reflectionMethodCache[$methodName];
+    }
+
+    private function getMlcCachableMethodAttribute(string $methodName): ?MlcCachableMethod
+    {
+        $reflection = $this->getMethodReflection($methodName);
+        $attributes = $reflection->getAttributes(MlcCachableMethod::class);
+
+        if (count($attributes) === 0) {
+            return null;
+        }
+
+        /** @var MlcCachableMethod $cachableMethod */
+        return $attributes[0]->newInstance();
+    }
+
+    private function getCacheKeyForMethodCallObject(MethodCallObject $methodCallObject): string
+    {
+        if(!array_key_exists($methodCallObject->getMethod(), $this->keyGeneratorPerMethod)) {
+            $mlcCachableMethod = $this->getMlcCachableMethodAttribute($methodCallObject->getMethod());
+
+            if ($mlcCachableMethod === null) {
+                // safe fallback to default key generator
+                $this->keyGeneratorPerMethod[$methodCallObject->getMethod()] = [$this, 'defaultKeyGenerator'];
+            } else {
+                if ($mlcCachableMethod->hasKeyGenerator()) {
+                    $this->keyGeneratorPerMethod[$methodCallObject->getMethod()] = $mlcCachableMethod->getKeyGeneratorCallable();
+                } else {
+                    $this->keyGeneratorPerMethod[$methodCallObject->getMethod()] = [$this, 'defaultKeyGenerator'];
+                }
+            }
+        }
+
+        $keyGenerator = $this->keyGeneratorPerMethod[$methodCallObject->getMethod()];
+        return call_user_func_array($keyGenerator, [$methodCallObject]);
+    }
+
+    private function defaultKeyGenerator(MethodCallObject $methodCallObject): string
+    {
+        return $this->cacheKeyPrefix.':'.$methodCallObject->getMethod().':'.sha1(serialize($methodCallObject->getArguments()));
+    }
+
+    private function getTtlForMethod(string $method): int
+    {
+        if(array_key_exists($method, $this->ttlPerMethod)) {
+            return $this->ttlPerMethod[$method];
+        }
+
+        $mlcCachableMethod = $this->getMlcCachableMethodAttribute($method);
+
+        if ($mlcCachableMethod === null) {
+            $this->ttlPerMethod[$method] = $this->defaultTtlSeconds;
+        } else {
+            $this->ttlPerMethod[$method] = $mlcCachableMethod->getTtlSeconds();
+        }
+        return $this->ttlPerMethod[$method];
+    }
+}
