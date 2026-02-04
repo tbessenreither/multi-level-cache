@@ -7,9 +7,9 @@ namespace /*{ServiceNamespace}*/;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachableMethod;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachedService;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
+use Tbessenreither\MultiLevelCache\Factory\MultiLevelCacheFactory;
+use Tbessenreither\MultiLevelCache\Service\MultiLevelCacheService;
 use ReflectionMethod;
-use Robinson\Common\MultiLevelCache\Factory\MultiLevelCacheFactory;
-use Robinson\Common\MultiLevelCache\Service\MultiLevelCacheService;
 use /*{InterfaceClass}*/;
 
 /**
