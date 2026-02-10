@@ -147,6 +147,22 @@ class MlcFileOperationService
         echo "Added interface '$interface' to class '$class' in file: $filePath" . PHP_EOL;
     }
 
+    public static function getFilePathFromClassString(string $originalClass, string $class): string
+    {
+        $rootInfo = self::findRootForClass($originalClass);
+        $psr4Root = $rootInfo['namespace'];
+        $rootDirectory = $rootInfo['path'];
+
+        if(!str_starts_with($class, $psr4Root)) {
+            throw new RuntimeException("Class '$class' does not start with expected PSR-4 root '$psr4Root'.");
+        }
+
+        $relativeClassPath = str_replace('\\', DIRECTORY_SEPARATOR, substr($class, strlen($psr4Root))) . '.php';
+        $absoluteClassPath = $rootDirectory . $relativeClassPath;
+
+        return $absoluteClassPath;
+    }
+
     private static function getLineToInsertUseStatement(array $fileLines): ?int
     {
         $insertUseAfterLine = null;
@@ -180,22 +196,6 @@ class MlcFileOperationService
             }
         }
         return $insertUseAfterLine + 1;
-    }
-
-    private static function getFilePathFromClassString(string $originalClass, string $class): string
-    {
-        $rootInfo = self::findRootForClass($originalClass);
-        $psr4Root = $rootInfo['namespace'];
-        $rootDirectory = $rootInfo['path'];
-
-        if(!str_starts_with($class, $psr4Root)) {
-            throw new RuntimeException("Class '$class' does not start with expected PSR-4 root '$psr4Root'.");
-        }
-
-        $relativeClassPath = str_replace('\\', DIRECTORY_SEPARATOR, substr($class, strlen($psr4Root))) . '.php';
-        $absoluteClassPath = $rootDirectory . $relativeClassPath;
-
-        return $absoluteClassPath;
     }
 
     /**

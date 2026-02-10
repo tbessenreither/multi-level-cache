@@ -23,49 +23,55 @@ function resolveServiceClass(string $service): ?string
     return null;
 }
 
-PrintTools::headline('Create or Update a cached service...');
+try {
+    PrintTools::headline('Create or Update a cached service...');
 
 
-PrintTools::info('Parsing command line arguments...');
-$arguments = ArgParser::parse();
-PrintTools::table(
-    ['Argument', 'Value'],
-    array_map(
-        fn ($key, $value) => [$key, $value],
-        array_keys($arguments),
-        $arguments,
-    ),
-);
+    PrintTools::info('Parsing command line arguments...');
+    $arguments = ArgParser::parse();
+    PrintTools::table(
+        ['Argument', 'Value'],
+        array_map(
+            fn ($key, $value) => [$key, $value],
+            array_keys($arguments),
+            $arguments,
+        ),
+    );
 
-if(!isset($arguments['service'])) {
-    PrintTools::error("No service specified. Use --service=App.Service.ExampleService to specify the service.");
+    if(!isset($arguments['service'])) {
+        PrintTools::error("No service specified. Use --service=App.Service.ExampleService to specify the service.");
+        exit(1);
+    }
+
+    PrintTools::info("Resolving service class for '{$arguments['service']}'...");
+    $serviceClass = resolveServiceClass($arguments['service']);
+    if (!$serviceClass) {
+        PrintTools::error("Service class for '{$arguments['service']}' not found.");
+        exit(1);
+    }
+    PrintTools::line("Service class found: {$serviceClass}".PHP_EOL);
+
+    PrintTools::subHeadline('Generating cached service.');
+    $service = new MlcMakeCachedServiceService();
+    $targetFile = $service->generateCachedService($serviceClass);
+
+    if(!$targetFile) {
+        PrintTools::error("Failed to generate cached service for '{$serviceClass}'.");
+        exit(1);
+    }
+
+    PrintTools::success("Cached service generated successfully.".PHP_EOL);
+
+    PrintTools::table(
+        ['Key', 'Value'],
+        [
+            ['Class', $targetFile['class']],
+            ['Interface', $targetFile['interface']],
+        ],
+    );
+    echo PHP_EOL.PHP_EOL;
+
+} catch (Exception $e) {
+    PrintTools::error("An error occurred: ".PHP_EOL . $e->getMessage());
     exit(1);
 }
-
-PrintTools::info("Resolving service class for '{$arguments['service']}'...");
-$serviceClass = resolveServiceClass($arguments['service']);
-if (!$serviceClass) {
-    PrintTools::error("Service class for '{$arguments['service']}' not found.");
-    exit(1);
-}
-PrintTools::line("Service class found: {$serviceClass}".PHP_EOL);
-
-PrintTools::subHeadline('Generating cached service.');
-$service = new MlcMakeCachedServiceService();
-$targetFile = $service->generateCachedService($serviceClass);
-
-if(!$targetFile) {
-    PrintTools::error("Failed to generate cached service for '{$serviceClass}'.");
-    exit(1);
-}
-
-PrintTools::success("Cached service generated successfully.".PHP_EOL);
-
-PrintTools::table(
-    ['Key', 'Value'],
-    [
-        ['Class', $targetFile['class']],
-        ['Interface', $targetFile['interface']],
-    ],
-);
-echo PHP_EOL.PHP_EOL;

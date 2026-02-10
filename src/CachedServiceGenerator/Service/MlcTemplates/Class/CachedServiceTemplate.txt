@@ -15,9 +15,11 @@ use /*{InterfaceClass}*/;
 /**
 * Cache enabled wrapper for Service /*{ServiceName}*/.
 *
-* This Wrapper provides all public methods from the origin service and was generated using the `mlc:make-cached-service` command
+* This Wrapper provides all public methods from the origin service and was generated using the make command
 *
-* You can regenerate/update using `php bin/console mlc:make-cached-service /*{classDotSeparated}*/`
+* You can regenerate/update using `php vendor/tbessenreither/multi-level-cache/bin/make --service=/*{classDotSeparated}*/`
+* 
+* Or you can update all services with `php vendor/tbessenreither/multi-level-cache/bin/update`
 * @codeCoverageIgnore
 */
 #[MlcCachedService(
