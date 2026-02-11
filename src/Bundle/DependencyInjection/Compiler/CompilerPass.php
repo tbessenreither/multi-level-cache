@@ -7,7 +7,6 @@ namespace Tbessenreither\MultiLevelCache\Bundle\DependencyInjection\Compiler;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
-use Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector;
 use Tbessenreither\MultiLevelCache\Factory\MultiLevelCacheFactory;
 
 

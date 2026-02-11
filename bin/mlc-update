@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+## Description: Updates all existing cached versions of services in this project.
+## usage: ddev mlc-update
+## Example: ddev mlc-update
+
+php vendor/tbessenreither/multi-level-cache/src/bin/mlc-update

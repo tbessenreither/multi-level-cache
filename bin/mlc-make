@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+## Description: Creates or Updates a cached version of a given Service.
+## usage: ddev mlc-make [service]
+## Example: ddev mlc-make App.Service.TestService
+
+php vendor/tbessenreither/multi-level-cache/src/bin/mlc-make --service="$@"
