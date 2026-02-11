@@ -18,7 +18,6 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Stopwatch\Stopwatch;
 use Throwable;
 
-
 /**
  * The Core Service of our MultiLevelCache
  * It manages all configured cache levels and provides get, set and delete methods.
@@ -64,7 +63,7 @@ class MultiLevelCacheService
      * stores the object in the lowest level cache
      * if writeL0OnSet is true, it also writes to level 0 cache
      */
-    public function set(string $key, object|string $object, int $ttlSeconds): void
+    public function set(string $key, object|string|int|float|bool $object, int $ttlSeconds): void
     {
         if (is_string($object)) {
             $this->raiseIssue(WarningEnum::WARNING_STORED_STRING_VALUE);
@@ -88,7 +87,7 @@ class MultiLevelCacheService
      * If not found, it calls the provided getter function to fetch the object.
      * When fetched from the getter, the result is stored in the lowest level cache.
      */
-    public function get(string $key, ?callable $callable = null, int $ttlSeconds = 300): object|string|null
+    public function get(string $key, ?callable $callable = null, int $ttlSeconds = 300): object|string|int|float|bool|null
     {
         $stopwatchEventName = "get()";
         $this->startStopwatchEvent($stopwatchEventName);
@@ -263,7 +262,7 @@ class MultiLevelCacheService
         return $cachedObject;
     }
 
-    private function getFromSource(string $key, callable $callable, int $ttlSeconds): object|string|null
+    private function getFromSource(string $key, callable $callable, int $ttlSeconds): object|string|int|float|bool|null
     {
         $sourceStatisticsLevel = count($this->caches);
         $this->startStopwatchEvent("getFromSource()");

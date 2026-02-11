@@ -6,7 +6,6 @@ namespace Tbessenreither\MultiLevelCache\Dto;
 
 use InvalidArgumentException;
 
-
 class CacheObjectWrapperDto
 {
     private int $createdAt;
@@ -17,7 +16,7 @@ class CacheObjectWrapperDto
      * @param int<0,100> $betaDecayStartInPercent
      */
     public function __construct(
-        private readonly object|string $object,
+        private readonly object|string|int|float|bool $object,
         private readonly int $ttlSeconds,
         private int $betaDecayStartInPercent = 75
     ) {
@@ -57,7 +56,7 @@ class CacheObjectWrapperDto
         return $object;
     }
 
-    public function getObject(): object|string
+    public function getObject(): object|string|int|float|bool
     {
         return $this->object;
     }
