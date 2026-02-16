@@ -7,8 +7,10 @@ namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service;
 use ReflectionClass;
 use RuntimeException;
 
+
 class MlcFileOperationService
 {
+
     public static function writeFile(string $originalClass, string $class, string $code): string
     {
         $targetFile = self::getFilePathFromClassString(
@@ -18,6 +20,7 @@ class MlcFileOperationService
 
         self::ensureDirectoryExists(dirname($targetFile));
         self::writeFileToDisk($targetFile, $code);
+
         return $targetFile;
     }
 
@@ -40,20 +43,20 @@ class MlcFileOperationService
 
         $found = false;
 
-        if(in_array('Service', $namespaceParts, true)) {
+        if (in_array('Service', $namespaceParts, true)) {
             $found = [
                 'namespacePartKey' => array_search('Service', $namespaceParts, true),
                 'pathPartKey' => array_search('Service', $pathParts, true),
             ];
-        } elseif(in_array('Resource', $namespaceParts, true)) {
+        } elseif (in_array('Resource', $namespaceParts, true)) {
             $found = [
                 'namespacePartKey' => array_search('Resource', $namespaceParts, true) + 2,
                 'pathPartKey' => array_search('Resource', $pathParts, true) + 2,
             ];
         } else {
-            foreach($namespaceParts as $namespacePartKey => $namespacePart) {
-                foreach($pathParts as $pathPartKey => $pathPart) {
-                    if($namespacePart === $pathPart) {
+            foreach ($namespaceParts as $namespacePartKey => $namespacePart) {
+                foreach ($pathParts as $pathPartKey => $pathPart) {
+                    if ($namespacePart === $pathPart) {
                         $found = [
                             'namespacePartKey' => $namespacePartKey,
                             'pathPartKey' => $pathPartKey,
@@ -61,18 +64,18 @@ class MlcFileOperationService
                         break;
                     }
                 }
-                if($found !== false) {
+                if ($found !== false) {
                     break;
                 }
             }
         }
 
-        if($found === false) {
-            throw new RuntimeException('Could not map namespace to path for class: ' . $class.' and path '.$originalPath);
+        if ($found === false) {
+            throw new RuntimeException('Could not map namespace to path for class: ' . $class . ' and path ' . $originalPath);
         }
 
-        $rootDirectory = implode(DIRECTORY_SEPARATOR, array_slice($pathParts, 0, $found['pathPartKey'])).DIRECTORY_SEPARATOR;
-        $psr4Root = implode('\\', array_slice($namespaceParts, 0, $found['namespacePartKey'])).'\\';
+        $rootDirectory = implode(DIRECTORY_SEPARATOR, array_slice($pathParts, 0, $found['pathPartKey'])) . DIRECTORY_SEPARATOR;
+        $psr4Root = implode('\\', array_slice($namespaceParts, 0, $found['namespacePartKey'])) . '\\';
 
         return [
             'namespace' => $psr4Root,
@@ -97,7 +100,7 @@ class MlcFileOperationService
             throw new RuntimeException("Failed to read file: $filePath");
         }
 
-        if(str_contains($contents, $useStatement)) {
+        if (str_contains($contents, $useStatement)) {
             return;
         } else {
             echo "Use statement for interface '$interface' does not exists in file: $filePath" . PHP_EOL;
@@ -120,7 +123,7 @@ class MlcFileOperationService
         }
 
         $declarationLine = &$fileLines[$lineWithClassDeclaration];
-        if(str_contains($declarationLine, $interfaceShortName)) {
+        if (str_contains($declarationLine, $interfaceShortName)) {
             echo "Class '$class' already implements interface '$interface' in file: $filePath" . PHP_EOL;
             return;
         }
@@ -128,7 +131,7 @@ class MlcFileOperationService
         // Insert the use statement before the class declaration
         // search the position of the use statements
         $insertUseAtLine = self::getLineToInsertUseStatement($fileLines);
-        if($insertUseAtLine === null) {
+        if ($insertUseAtLine === null) {
             throw new RuntimeException("Could not find position to insert use statement in file: $filePath");
         }
         array_splice($fileLines, $insertUseAtLine, 0, $useStatement);
@@ -137,8 +140,7 @@ class MlcFileOperationService
         if (str_contains($declarationLine, ' implements ')) {
             $declarationLine = str_replace(' implements ', ' implements ' . $interfaceShortName . ', ', $declarationLine);
         } else {
-            $classPart = 'class ' . (new ReflectionClass($class))->getShortName();
-            $declarationLine = str_replace($classPart, $classPart . ' implements ' . $interfaceShortName, $declarationLine);
+            $declarationLine .= ' implements ' . $interfaceShortName;
         }
 
         $newContents = implode(PHP_EOL, $fileLines);
@@ -153,7 +155,7 @@ class MlcFileOperationService
         $psr4Root = $rootInfo['namespace'];
         $rootDirectory = $rootInfo['path'];
 
-        if(!str_starts_with($class, $psr4Root)) {
+        if (!str_starts_with($class, $psr4Root)) {
             throw new RuntimeException("Class '$class' does not start with expected PSR-4 root '$psr4Root'.");
         }
 
@@ -168,7 +170,7 @@ class MlcFileOperationService
         $insertUseAfterLine = null;
 
         // Try to group Interfaces together
-        if($insertUseAfterLine === null) {
+        if ($insertUseAfterLine === null) {
             foreach ($fileLines as $lineNumber => $line) {
                 if (
                     str_starts_with(trim($line), 'use ')
@@ -179,7 +181,7 @@ class MlcFileOperationService
             }
         }
         // Just search for the last use line
-        if($insertUseAfterLine === null) {
+        if ($insertUseAfterLine === null) {
             foreach ($fileLines as $lineNumber => $line) {
                 if (str_starts_with(trim($line), 'use ')) {
                     $insertUseAfterLine = $lineNumber;
@@ -187,8 +189,8 @@ class MlcFileOperationService
             }
         }
         // Give up and just put it after the namespace
-        if($insertUseAfterLine === null) {
-            foreach($fileLines as $lineNumber => $line) {
+        if ($insertUseAfterLine === null) {
+            foreach ($fileLines as $lineNumber => $line) {
                 if (str_starts_with(trim($line), 'namespace ')) {
                     $insertUseAfterLine = $lineNumber;
                     break;
@@ -219,4 +221,5 @@ class MlcFileOperationService
             throw new RuntimeException("Failed to write file: $file");
         }
     }
+
 }
