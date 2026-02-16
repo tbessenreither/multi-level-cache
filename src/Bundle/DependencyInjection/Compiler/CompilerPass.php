@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\Bundle\DependencyInjection\Compiler;
 
+use Redis;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\InvalidatorService;
 use Tbessenreither\MultiLevelCache\Factory\MultiLevelCacheFactory;
+use Tbessenreither\MultiLevelCache\Service\Implementations\DirectRedisCacheService;
 
 
 class CompilerPass implements CompilerPassInterface
@@ -29,7 +32,8 @@ class CompilerPass implements CompilerPassInterface
 			'TbessenreitherMultiLevelCache',
 		]);
 
-		$this->processMultiLevelCacheFactory($container);
+		$this->processClass($container, MultiLevelCacheFactory::class);
+		$this->processClass($container, InvalidatorService::class);
 	}
 
 	private function getRootDir(): string
@@ -37,16 +41,21 @@ class CompilerPass implements CompilerPassInterface
 		return rtrim(dirname(__DIR__, 3), '/');
 	}
 
-	private function processMultiLevelCacheFactory(ContainerBuilder $container): void
+	private function processClass(ContainerBuilder $container, string $classInstance): Definition
 	{
-		if (!$container->hasDefinition(MultiLevelCacheFactory::class)) {
-			$definition = new Definition(MultiLevelCacheFactory::class);
+		if (!$container->hasDefinition($classInstance)) {
+			$definition = new Definition($classInstance);
 			$definition->setAutowired(true);
 			$definition->setAutoconfigured(true);
 			$definition->setPublic(true);
-			$container->setDefinition(MultiLevelCacheFactory::class, $definition);
+			$container->setDefinition($classInstance, $definition);
+
+			return $definition;
 		} else {
-			$container->getDefinition(MultiLevelCacheFactory::class)->setPublic(true);
+			$definition = $container->getDefinition($classInstance);
+			$definition->setPublic(true);
+			return $definition;
+
 		}
 	}
 

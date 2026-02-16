@@ -28,7 +28,7 @@ class MultiLevelCacheFactory
     private Redis|RedisCluster $redisClient;
 
     public function __construct(
-        #[Autowire(env: 'REDIS_DSN')]
+        #[Autowire('%env(REDIS_DSN)%')]
         #[SensitiveParameter]
         readonly string $redisDsn,
         private readonly Stopwatch $stopwatch,
@@ -88,6 +88,11 @@ class MultiLevelCacheFactory
         return new InMemoryCacheService(
             maxSize: $maxSize,
         );
+    }
+
+    public function getImplementationRedisWithPrefix(string $keyPrefix): DirectRedisCacheService
+    {
+        return $this->getImplementationRedis($this->redisClient, $keyPrefix);
     }
 
     public function getImplementationRedis(Redis|RedisCluster $redisClient, string $keyPrefix): DirectRedisCacheService

@@ -4,24 +4,32 @@ namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service;
 
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
 use Tbessenreither\MultiLevelCache\Factory\MultiLevelCacheFactory;
+use Tbessenreither\MultiLevelCache\Service\Implementations\DirectRedisCacheService;
 use Tbessenreither\MultiLevelCache\Service\MultiLevelCacheService;
 
 
 class InvalidatorService
 {
-	private MultiLevelCacheService $multiLevelCacheService;
+	private DirectRedisCacheService $directRedisCacheService;
 
 	public function __construct(
-		MultiLevelCacheFactory $multiLevelCacheFactory,
+		private MultiLevelCacheFactory $multiLevelCacheFactory,
 	) {
-		$this->multiLevelCacheService = $multiLevelCacheFactory->createDefault2LevelCache();
+		$this->directRedisCacheService = $multiLevelCacheFactory->getImplementationRedisWithPrefix('mlc');
 	}
 
-	public function invalidateCacheForClass(string $classString, string $method): void
+	public function invalidateCacheForClass(string $classString): void
 	{
-		$generateKey = KeyGeneratorService::getKey('mlc_invalidator', new MethodCallObject($classString, $method, []));
+		$generateKey = KeyGeneratorService::getKeyPatternForClass(new MethodCallObject($classString, '', []));
 
+		$this->directRedisCacheService->deleteByPattern($generateKey);
+	}
 
+	public function invalidateCacheForMethod(string $classString, string $method): void
+	{
+		$generateKey = KeyGeneratorService::getKeyPatternForMethod(new MethodCallObject($classString, $method, []));
+
+		$this->directRedisCacheService->deleteByPattern($generateKey);
 	}
 
 }
