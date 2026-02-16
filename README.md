@@ -12,6 +12,8 @@ A high-performance, multi-level caching system for Symfony applications. This bu
 - Easy integration with Symfony Dependency Injection
 - Extensible via interfaces and factories
 - Exception handling and diagnostics
+- Autogeneration of cached version of services
+- Cache invalidation by class/method patterns for cached services
 
 ---
 
@@ -102,6 +104,34 @@ $value = $this->cache->get('my_key', function() {
     return $expensiveComputationOrFetch();
 }, 3600);
 $this->cache->delete('my_key');
+```
+
+## Cached Service Generation
+
+## Documentation
+
+> **⚠️ Note: This feature is still experimental and may be subject to changes in future releases.**
+
+
+The bundle also provides a way to autogenerate cached versions of your services. By using the `CachedServiceGenerator`, you can create cached proxies for your existing services without modifying their code. This allows you to easily add caching to any service method by simply configuring the generator.
+
+The Package provides ddev commands to generate a service (i.e `ddev mlc-make App.Service.TestService`), and update all existing generated services (i.e `ddev mlc-update`).
+
+For Cache Invalidation of cache entries related to cached services, the `InvalidatorService` can be used. It provides methods to invalidate cache entries based on class and method patterns, allowing you to efficiently clear cache for specific services or methods when needed.
+
+```php
+
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\InvalidatorService;
+
+public function __construct(InvalidatorService $invalidatorService) {
+    $this->invalidatorService = $invalidatorService;
+}
+
+// Invalidate cache for a specific class
+$this->invalidatorService->invalidateCacheForClass(App\Service\TestService::class);
+
+// Invalidate cache for a specific method
+$this->invalidatorService->invalidateCacheForMethod(App\Service\TestService::class, 'methodName');
 ```
 
 ---
