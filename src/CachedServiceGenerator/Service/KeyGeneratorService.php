@@ -13,11 +13,11 @@ class KeyGeneratorService
 	/**
 	 * @var array<string, callable>
 	 */
-	private array $keyGeneratorCache = [];
+	private static array $keyGeneratorCache = [];
 	/**
 	 * @var array<string, string>
 	 */
-	private array $cacheKeyPrefixCache = [];
+	private static array $cacheKeyPrefixCache = [];
 
 	public static function getKey(MethodCallObject $methodCallObject): string
 	{
@@ -41,7 +41,7 @@ class KeyGeneratorService
 			}
 		}
 
-		return call_user_func(self::$keyGeneratorCache[$cacheGeneratorCacheKey], [$methodCallObject]);
+		return call_user_func(self::$keyGeneratorCache[$cacheGeneratorCacheKey], $methodCallObject);
 	}
 
 	public static function getKeyForMethod(MethodCallObject $methodCallObject): callable
@@ -63,7 +63,7 @@ class KeyGeneratorService
 		return implode(':', $splitKeyParts) . ':*';
 	}
 
-	private static function defaultKeyGenerator(MethodCallObject $methodCallObject): string
+	public static function defaultKeyGenerator(MethodCallObject $methodCallObject): string
 	{
 		if (!isset(self::$cacheKeyPrefixCache[$methodCallObject->getClass()])) {
 			$cachedClassString = $methodCallObject->getClass() . 'Cached';

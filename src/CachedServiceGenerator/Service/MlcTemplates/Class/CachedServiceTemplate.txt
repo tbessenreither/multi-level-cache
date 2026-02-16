@@ -45,7 +45,7 @@ class /*{ServiceName}*/Cached implements /*{InterfaceClassName}*/
         MultiLevelCacheFactory $multiLevelCacheFactory,
         private /*{ServiceName}*/ $instance,
     ) {
-        $cacheGroupName = strtolower('mlc_cachedService_'.str_replace('\\', '-', $this->instance::class));
+        $cacheGroupName = 'MLC_CachedService-/*{ClassUnderscoreSeparated}*/';
 
         $this->cache = $multiLevelCacheFactory->createDefault2LevelCache(
             inMemoryCacheMaxSize: 100,
