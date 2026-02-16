@@ -37,6 +37,20 @@ class MlcCachableMethod
         $this->keyGeneratorCallable = $keyGenerator;
     }
 
+    public static function fromReflectionMethod(ReflectionMethod $method, bool $throw = true): ?self
+    {
+        $attributes = $method->getAttributes(self::class);
+        if (empty($attributes)) {
+            if ($throw) {
+                throw new InvalidArgumentException("Method {$method->getName()} is not marked as MlcCachableMethod");
+            }
+
+            return null;
+        }
+
+        return $attributes[0]->newInstance();
+    }
+
     public function getTtlSeconds(): int
     {
         return $this->ttlSeconds;

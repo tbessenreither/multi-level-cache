@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service;
 
-class MlcPhpDocManipulatorService
+
+class PhpDocManipulatorService
 {
+
     public static function add(string|false $docComment, string|array $linesToAdd, string $position = '@'): string
     {
         if ($docComment === false) {
@@ -13,14 +15,14 @@ class MlcPhpDocManipulatorService
             $docComment = "/**\n*/";
         }
 
-        if(!is_array($linesToAdd)) {
+        if (!is_array($linesToAdd)) {
             $linesToAdd = [$linesToAdd];
         }
 
         $docComment = trim($docComment, '/* ');
         $docLines = explode("\n", $docComment);
         //remove trim spaces and leading * from lines
-        $docLines = array_map(fn ($line) => trim(ltrim($line, '* ')), $docLines);
+        $docLines = array_map(fn($line) => trim(ltrim($line, '* ')), $docLines);
         //remove leading and trailing empty lines
         while (!empty($docLines) && trim($docLines[0]) === '') {
             array_shift($docLines);
@@ -42,7 +44,7 @@ class MlcPhpDocManipulatorService
             if (!$inserted) {
                 $docLines = array_merge($docLines, $linesToAdd);
             }
-        } elseif($position === '@') {
+        } elseif ($position === '@') {
             //find the last line with an @ and insert below, if no line found insert at end
             $inserted = false;
             for ($i = count($docLines) - 1; $i >= 0; $i--) {
@@ -69,12 +71,13 @@ class MlcPhpDocManipulatorService
 
     public static function indent(string|false $docComment): string
     {
-        if($docComment === false) {
+        if ($docComment === false) {
             return '';
         }
         $indent = '    ';
         $lines = explode("\n", $docComment);
-        $indentedLines = array_map(fn ($line) => $indent . trim($line), $lines);
+        $indentedLines = array_map(fn($line) => $indent . trim($line), $lines);
         return implode("\n", $indentedLines);
     }
+
 }

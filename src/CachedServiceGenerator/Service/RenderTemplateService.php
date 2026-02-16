@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service;
 
-class MlcRenderTemplateService
+
+class RenderTemplateService
 {
+
     /**
      * Replace placeholders in the template with provided values.
      * @param string $template
@@ -16,14 +18,15 @@ class MlcRenderTemplateService
     {
         $template = self::getTemplate($templateName);
         foreach ($placeholders as $key => $value) {
-            if($value === null || $value === false) {
+            if ($value === null || $value === false) {
                 $value = '';
             }
-            if(!is_string($value)) {
-                $value = (string)$value;
+            if (!is_string($value)) {
+                $value = (string) $value;
             }
             $template = str_replace("/*{{$key}}*/", $value, $template);
         }
+
         return $template;
     }
 
@@ -35,4 +38,5 @@ class MlcRenderTemplateService
         $templatePath = __DIR__ . "/MlcTemplates/{$name}Template.txt";
         return file_get_contents($templatePath);
     }
+
 }

@@ -8,7 +8,7 @@ use ReflectionClass;
 use RuntimeException;
 
 
-class MlcFileOperationService
+class FileOperationService
 {
 
     public static function writeFile(string $originalClass, string $class, string $code): string
