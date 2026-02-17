@@ -108,51 +108,122 @@ $this->cache->delete('my_key');
 
 ## Cached Service Generation
 
-## Documentation
-
 > **⚠️ Note: This feature is still experimental and may be subject to changes in future releases.**
 
 
 The bundle also provides a way to autogenerate cached versions of your services. By using the `CachedServiceGenerator`, you can create cached proxies for your existing services without modifying their code. This allows you to easily add caching to any service method by simply configuring the generator.
+### Setup
+If you're using [Copycat](https://github.com/tbessenreither/php-copycat), the Package automatically provides ddev commands to generate a service (i.e `ddev mlc-make App.Service.TestService`), and update all existing generated services (i.e `ddev mlc-update`).
 
-The Package provides ddev commands to generate a service (i.e `ddev mlc-make App.Service.TestService`), and update all existing generated services (i.e `ddev mlc-update`).
+If you don't use Copycat, first of all, why?, second: It's fine. You can find the commands in the `/bin` directory and copy them wherever you'd like.
 
-For Cache Invalidation of cache entries related to cached services, the `InvalidatorService` can be used. It provides methods to invalidate cache entries based on class and method patterns, allowing you to efficiently clear cache for specific services or methods when needed.
+Make sure you've added the bundle to Symfony Bundles if you're using that one.
+
+#### How to create and updated cached services
+
+Easy, first you need the namespace of the Service you want to create a cached version of. Let's say `App\Service\TestService`. Oh damn, backslash sucks in cli let's make that `App.Service.TestService`. Now you can just run the make command
+```bash
+ddev mlc-make App.Service.TestService
+```
+which will output
+```text
+$ ddev mlc-make App.Service.TestService
+========================================================
+          Create or Update a cached service...
+========================================================
+
+
+Parsing command line arguments...
+| Argument   | Value                     |
+------------------------------------------
+| service    | App.Service.TestService   |
+
+Resolving service class for 'App.Service.TestService'...
+Service class found: App\Service\TestService
+
+------------------------------------
+     Generating cached service.
+------------------------------------
+
+Use statement for interface 'App\Interface\Service\TestServiceInterface' does not exists in file: /var/www/html/src/Service/TestService.php
+Attempt adding it.
+Added interface 'App\Interface\Service\TestServiceInterface' to class 'App\Service\TestService' in file: /var/www/html/src/Service/TestService.php
+
+Cached service generated successfully.
+
+| Key         | Value                                                          |
+--------------------------------------------------------------------------------
+| Class       | /var/www/html/src/Service/TestServiceCached.php                |
+| Interface   | /var/www/html/src/Interface/Service/TestServiceInterface.php   |
+```
+As you can see it generated the TestServiceCached Class as well as an interface linking the cached and non cached versions together. It also added the interface to the non cached version of the service.
+
+This means they are feature compatible and you can switch them out however you like. Neat.
+
+But wait, how does the script know how long to cache method responses for and what to cache and what shoudn't? Well... it doesn't. Right now it's not caching anything. Let's fix that.
+
+For this we make use of the MlcCachableMethod Attribute.
+
+You just add this above any Method of `TestService` you want to have cached and tell it for how long via the `ttlSeconds` argument.
+```php
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachableMethod;
+
+    #[MlcCachableMethod(ttlSeconds: 600)]
+    public function reverse(string $input): string
+    {
+        return strrev($input);
+    }
+```
+
+Okay, now that we have annotated all Methods we want cached we need to regenerate all the cached versions of Services we did. But don't sweat, it's just one single command.
+```bash
+ddev mlc-update
+```
+Output will be something allong those lines:
+```text
+$ ddev mlc-update
+===================================================
+          Updating all cached services...
+===================================================
+
+--------------------------------------------------------
+     Starting update process for cached services...
+--------------------------------------------------------
+
+| Service                         | Status    | Message   |
+-----------------------------------------------------------
+| App\Service\TestServiceCached   | updated   |           |
+
+Cached services updated. See output for details.
+```
+
+You get a table with all services that where updated including any problems that might have occured.
+
+That's it, everything is now up to date and ready to use. You can just inject the cached version directly or use the Interface and a entry in your services.yaml to descide which version to inject.
+Caching is now no longer part of your Business logic.
+
+#### Cache Invalidation
+
+This feature comes with it's own Invalidator Service.
+
+It allows you to invalidate the cache based on class or based on class and method.
 
 ```php
 
+use App\Service\TestService;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\InvalidatorService;
 
-public function __construct(InvalidatorService $invalidatorService) {
-    $this->invalidatorService = $invalidatorService;
+public function __construct(
+   private InvalidatorService $invalidatorService,
+) {
 }
 
 // Invalidate cache for a specific class
-$this->invalidatorService->invalidateCacheForClass(App\Service\TestService::class);
+$this->invalidatorService->invalidateCacheForClass(TestService::class);
 
 // Invalidate cache for a specific method
-$this->invalidatorService->invalidateCacheForMethod(App\Service\TestService::class, 'methodName');
+$this->invalidatorService->invalidateCacheForMethod(TestService::class, 'methodName');
 ```
-
----
-
-## Architecture Overview
-
-- **Bundle:** Entry point for Symfony integration ([src/Bundle/MultiLevelCacheBundle.php](src/Bundle/MultiLevelCacheBundle.php))
-- **Service:** Main cache logic ([src/Service/MultiLevelCacheService.php](src/Service/MultiLevelCacheService.php))
-- **Factory:** Helper for common cache setups ([src/Factory/MultiLevelCacheFactory.php](src/Factory/MultiLevelCacheFactory.php))
-- **Implementations:**
-  - In-memory ([src/Service/Implementations/InMemoryCacheService.php](src/Service/Implementations/InMemoryCacheService.php))
-  - Redis ([src/Service/Implementations/DirectRedisCacheService.php](src/Service/Implementations/DirectRedisCacheService.php))
-  - File ([src/Service/Implementations/FileCacheService.php](src/Service/Implementations/FileCacheService.php))
-- **Key Generator:** ([src/Service/CacheKeyGeneratorService.php](src/Service/CacheKeyGeneratorService.php))
-- **Interfaces:**
-  - [MultiLevelCacheImplementationInterface](src/Interface/MultiLevelCacheImplementationInterface.php)
-  - [CacheInformationInterface](src/Interface/CacheInformationInterface.php)
-- **DTOs:** Data transfer objects for cache and profiling ([src/Dto/](src/Dto/))
-- **Enums:** Error and warning enums ([src/Enum/](src/Enum/))
-- **Exceptions:** Custom exception types ([src/Exception/](src/Exception/))
-- **Profiler Integration:** Data collector and templates ([src/DataCollector/](src/DataCollector/), [src/Templates/Profiler/](src/Templates/Profiler/))
 
 ---
 
@@ -181,21 +252,6 @@ Run PHPUnit tests:
 ```bash
 ddev composer test
 ```
-
----
-
-## File Overview
-
-- **src/Bundle/**: Symfony bundle integration
-- **src/Service/**: Main service and cache implementations
-- **src/Factory/**: Factory for cache setup
-- **src/Dto/**: Data transfer objects
-- **src/Enum/**: Error and warning enums
-- **src/Exception/**: Custom exceptions
-- **src/Interface/**: Interfaces for extensibility
-- **src/DataCollector/**: Profiler and statistics
-- **src/Templates/Profiler/**: Symfony profiler templates
-- **tests/**: PHPUnit tests
 
 ---
 
