@@ -16,7 +16,7 @@
         "symfony/cache": "^7.3",
         "symfony/http-client": "^7.3",
         "symfony/console": "^7.3",
-        "tbessenreither/php-copycat": "dev-main"
+        "tbessenreither/copycat": "dev-main"
     },
     "require-dev": {
         "phpunit/phpunit": "^11.0",
@@ -26,7 +26,7 @@
     "repositories": [
         {
             "type": "vcs",
-            "url": "https://github.com/tbessenreither/php-copycat"
+            "url": "https://github.com/tbessenreither/copycat"
         }
     ],
     "autoload": {
