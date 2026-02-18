@@ -4,4 +4,4 @@
 ## usage: ddev mlc-update
 ## Example: ddev mlc-update
 
-php vendor/tbessenreither/multi-level-cache/src/bin/update
+php vendor/tbessenreither/multi-level-cache/src/Commands/update.php

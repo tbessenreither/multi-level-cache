@@ -4,4 +4,4 @@
 ## usage: ddev mlc-make [service]
 ## Example: ddev mlc-make App.Service.TestService
 
-php vendor/tbessenreither/multi-level-cache/src/bin/make --service="$@"
+php vendor/tbessenreither/multi-level-cache/src/Commands/make.php --service="$@"
