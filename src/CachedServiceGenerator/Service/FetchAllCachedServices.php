@@ -12,10 +12,8 @@ use ReflectionClass;
 use RuntimeException;
 use SplFileInfo;
 
-
 class FetchAllCachedServices
 {
-
     private static function getSrcDir(): string
     {
         $currentDir = dirname(__DIR__);
@@ -28,12 +26,11 @@ class FetchAllCachedServices
         // Now go up one more level to get to the root of the project
         $currentDir = dirname($currentDir);
 
-        $sourceDir = $currentDir . '/src';
+        $sourceDir = $currentDir.'/src';
 
         if (!is_dir($sourceDir)) {
             throw new RuntimeException("Source directory '$sourceDir' not found.");
         }
-
         return $sourceDir;
     }
 
@@ -88,7 +85,7 @@ class FetchAllCachedServices
                 $fqcn = $namespace !== '' ? $namespace . '\\' . $className : $className;
             }
 
-            if ($fqcn === '') {
+            if($fqcn === '') {
                 continue;
             }
 
@@ -96,7 +93,7 @@ class FetchAllCachedServices
             $reflection = new ReflectionClass($fqcn);
             $attributes = $reflection->getAttributes(MlcCachedService::class);
 
-            if (count($attributes) === 0) {
+            if(count($attributes) === 0) {
                 continue;
             }
             /** @var MlcCachedService $cachedServiceAttr */
@@ -109,5 +106,4 @@ class FetchAllCachedServices
             ];
         }
     }
-
 }

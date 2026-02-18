@@ -16,7 +16,6 @@ use Symfony\Component\HttpKernel\DataCollector\DataCollector;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 use Throwable;
 
-
 class MultiLevelCacheDataCollector extends DataCollector implements DataCollectorInterface
 {
     public const NAME = 'tbessenreither.multi_level_cache_service_collector';

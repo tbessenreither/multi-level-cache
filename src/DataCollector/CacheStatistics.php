@@ -6,7 +6,6 @@ namespace Tbessenreither\MultiLevelCache\DataCollector;
 
 use InvalidArgumentException;
 
-
 class CacheStatistics
 {
     public const TYPE_READ = 'read';

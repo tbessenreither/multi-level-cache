@@ -6,8 +6,6 @@ namespace Tbessenreither\MultiLevelCache\Exception;
 
 use Exception;
 
-
 class CacheEntryExpiredException extends Exception
 {
-
 }

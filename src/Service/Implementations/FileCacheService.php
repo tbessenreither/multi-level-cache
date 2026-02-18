@@ -15,7 +15,6 @@ use Tbessenreither\MultiLevelCache\Interface\CacheInformationInterface;
 use Tbessenreither\MultiLevelCache\Exception\CacheMissException;
 use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
 
-
 class FileCacheService implements MultiLevelCacheImplementationInterface, CacheInformationInterface
 {
     private string $kernelCacheDir;

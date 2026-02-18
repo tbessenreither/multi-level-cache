@@ -16,7 +16,7 @@ class CacheObjectWrapperDto
      * @param int<0,100> $betaDecayStartInPercent
      */
     public function __construct(
-        private readonly object|string|int|float|bool $object,
+        private readonly object|string|int|float|bool|array $object,
         private readonly int $ttlSeconds,
         private int $betaDecayStartInPercent = 75
     ) {
@@ -56,7 +56,7 @@ class CacheObjectWrapperDto
         return $object;
     }
 
-    public function getObject(): object|string|int|float|bool
+    public function getObject(): object|string|int|float|bool|array
     {
         return $this->object;
     }

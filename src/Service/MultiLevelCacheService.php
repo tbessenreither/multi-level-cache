@@ -63,7 +63,7 @@ class MultiLevelCacheService
      * stores the object in the lowest level cache
      * if writeL0OnSet is true, it also writes to level 0 cache
      */
-    public function set(string $key, object|string|int|float|bool $object, int $ttlSeconds): void
+    public function set(string $key, object|string|int|float|bool|array $object, int $ttlSeconds): void
     {
         if (is_string($object)) {
             $this->raiseIssue(WarningEnum::WARNING_STORED_STRING_VALUE);
@@ -87,8 +87,9 @@ class MultiLevelCacheService
      * If not found, it calls the provided getter function to fetch the object.
      * When fetched from the getter, the result is stored in the lowest level cache.
      */
-    public function get(string $key, ?callable $callable = null, int $ttlSeconds = 300): object|string|int|float|bool|null
+    public function get(string $key, ?callable $callable = null, int $ttlSeconds = 300): object|string|int|float|bool|array|null
     {
+
         $stopwatchEventName = "get()";
         $this->startStopwatchEvent($stopwatchEventName);
         try {
@@ -262,7 +263,7 @@ class MultiLevelCacheService
         return $cachedObject;
     }
 
-    private function getFromSource(string $key, callable $callable, int $ttlSeconds): object|string|int|float|bool|null
+    private function getFromSource(string $key, callable $callable, int $ttlSeconds): object|string|int|float|bool|array|null
     {
         $sourceStatisticsLevel = count($this->caches);
         $this->startStopwatchEvent("getFromSource()");

@@ -8,10 +8,8 @@ use Tbessenreither\MultiLevelCache\Enum\ErrorEnum;
 use Tbessenreither\MultiLevelCache\Enum\WarningEnum;
 use Tbessenreither\MultiLevelCache\Interface\DataCollectorIssueEnumInterface;
 
-
 readonly class DataCollectorIssueDto
 {
-
     public function __construct(
         private string $name,
         private string $value,

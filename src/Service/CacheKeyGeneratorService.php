@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\Service;
 
-
 class CacheKeyGeneratorService
 {
     public const KEY_DELIMITER = ':';

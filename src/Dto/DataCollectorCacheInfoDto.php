@@ -6,7 +6,6 @@ namespace Tbessenreither\MultiLevelCache\Dto;
 
 use Tbessenreither\MultiLevelCache\DataCollector\CacheStatistics;
 
-
 class DataCollectorCacheInfoDto
 {
     private array $stringReplacementsForId = ['\\' => '_', '_' => '-', ':' => '_', '.' => '-', '/' => '_', ' ' => '-', '[]' => 'Array'];

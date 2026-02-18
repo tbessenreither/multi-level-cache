@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service;
 
-
 class RenderTemplateService
 {
-
+    public const string TEMPLATE_DIRECTORY = 'MlcTemplates';
     /**
      * Replace placeholders in the template with provided values.
      * @param string $template
@@ -18,15 +17,14 @@ class RenderTemplateService
     {
         $template = self::getTemplate($templateName);
         foreach ($placeholders as $key => $value) {
-            if ($value === null || $value === false) {
+            if($value === null || $value === false) {
                 $value = '';
             }
-            if (!is_string($value)) {
-                $value = (string) $value;
+            if(!is_string($value)) {
+                $value = (string)$value;
             }
             $template = str_replace("/*{{$key}}*/", $value, $template);
         }
-
         return $template;
     }
 
@@ -35,8 +33,7 @@ class RenderTemplateService
      */
     private static function getTemplate(string $name): string
     {
-        $templatePath = __DIR__ . "/MlcTemplates/{$name}Template.txt";
+        $templatePath = __DIR__ . "/".self::TEMPLATE_DIRECTORY."/{$name}Template.txt";
         return file_get_contents($templatePath);
     }
-
 }

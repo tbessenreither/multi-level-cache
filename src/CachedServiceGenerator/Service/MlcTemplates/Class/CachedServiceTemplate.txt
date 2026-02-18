@@ -7,27 +7,28 @@ namespace /*{ServiceNamespace}*/;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachableMethod;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachedService;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\KeyGeneratorService;
 use Tbessenreither\MultiLevelCache\Factory\MultiLevelCacheFactory;
 use Tbessenreither\MultiLevelCache\Service\MultiLevelCacheService;
 use ReflectionMethod;
-use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\KeyGeneratorService;
-use /*{InterfaceClass}*/;
+/**
+* Dynamically added use statements
+*/
+/*{UseLines}*/
 
 /**
 * Cache enabled wrapper for Service /*{ServiceName}*/.
 *
 * This Wrapper provides all public methods from the origin service and was generated using the make command
-*
-* You can regenerate/update using `php vendor/tbessenreither/multi-level-cache/bin/make --service=/*{ClassDotSeparated}*/`
-*
-* Or you can update all services with `php vendor/tbessenreither/multi-level-cache/bin/update`
+* You can regenerate/update using php vendor/tbessenreither/multi-level-cache/bin/make --service=/*{ClassDotSeparated}*/
+* Or you can update all services with php vendor/tbessenreither/multi-level-cache/bin/update
 * @codeCoverageIgnore
 */
 #[MlcCachedService(
     originalServiceClass: /*{ServiceName}*/::class,
     allowSync: true,
 )]
-class /*{ServiceName}*/Cached implements /*{InterfaceClassName}*/
+class /*{ServiceName}*/Cached implements /*{InterfacesString}*/
 {
     public const CACHE_KEY_PREFIX = 'CachedService:/*{ClassUnderscoreSeparated}*/';
     /**

@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\Interface;
 
-
 interface DataCollectorIssueEnumInterface
 {
-
     /**
      * Returns the name of the issue.
      */

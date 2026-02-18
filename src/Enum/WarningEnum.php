@@ -6,7 +6,6 @@ namespace Tbessenreither\MultiLevelCache\Enum;
 
 use Tbessenreither\MultiLevelCache\Interface\DataCollectorIssueEnumInterface;
 
-
 enum WarningEnum: string implements DataCollectorIssueEnumInterface
 {
     case WARNING_STORED_STRING_VALUE = 'You stored a string value in an object cache. This is inefficient and may lead to issues. Consider caching the deserialized object instead.';

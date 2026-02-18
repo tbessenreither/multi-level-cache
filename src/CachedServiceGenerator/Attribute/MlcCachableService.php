@@ -11,14 +11,12 @@ use Attribute;
  * To mark a service as cachable.
  */
 #[Attribute(Attribute::TARGET_CLASS)]
-
-
 class MlcCachableService
 {
     private int $defaultTtlSeconds;
-
     public function __construct(
         ?int $defaultTtlSeconds = null,
+        private ?string $additionalInterface = null,
     ) {
         $this->defaultTtlSeconds = $defaultTtlSeconds ?? MakeCachedServiceService::DEFAULT_TTL_SECONDS;
     }
@@ -26,6 +24,11 @@ class MlcCachableService
     public function getDefaultTtlSeconds(): int
     {
         return $this->defaultTtlSeconds;
+    }
+
+    public function getAdditionalInterface(): ?string
+    {
+        return $this->additionalInterface;
     }
 
 }

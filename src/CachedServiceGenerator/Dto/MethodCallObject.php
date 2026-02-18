@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto;
 
-
 class MethodCallObject
 {
-
     public function __construct(
         private string $class,
         private string $method,

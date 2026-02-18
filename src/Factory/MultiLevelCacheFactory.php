@@ -17,7 +17,6 @@ use Tbessenreither\MultiLevelCache\Service\Implementations\InMemoryCacheService;
 use Tbessenreither\MultiLevelCache\Service\MultiLevelCacheService;
 use Throwable;
 
-
 /**
  * This Factory has methods to generate the most commonly used cache configurations for you.
  * No need to setup everything by yourself

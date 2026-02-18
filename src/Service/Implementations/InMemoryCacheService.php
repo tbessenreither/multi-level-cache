@@ -8,7 +8,6 @@ use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
 use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
 use Tbessenreither\MultiLevelCache\Interface\CacheInformationInterface;
 
-
 /**
  * Simple In-Memory Cache Implementation with size and TTL limits.
  * This adapter is useful for fast, temporary caching within a single request or process.

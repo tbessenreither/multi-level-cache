@@ -6,10 +6,8 @@ namespace Tbessenreither\MultiLevelCache\Interface;
 
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
 
-
 interface MultiLevelCacheImplementationInterface
 {
-
     /**
      * Set a value in the cache.
      */

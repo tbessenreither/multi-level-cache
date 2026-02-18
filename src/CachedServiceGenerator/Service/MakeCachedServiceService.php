@@ -16,7 +16,6 @@ use ReflectionUnionType;
 use RuntimeException;
 use Throwable;
 
-
 class MakeCachedServiceService
 {
     public const DEFAULT_TTL_SECONDS = 3600;
@@ -41,15 +40,17 @@ class MakeCachedServiceService
             throw new RuntimeException("The class '$class' is already a cached service.");
         }
 
+        $mlcCachableServiceInstance = $this->getMlcCachableServiceFromReflection($reflection);
+
         $namespace = $reflection->getNamespaceName();
         $shortName = $reflection->getShortName();
 
-        if ($cachedClass === null) {
+        if($cachedClass === null) {
             $cachedClassName = $shortName . 'Cached';
             $cachedClass = $namespace . '\\' . $cachedClassName;
         } else {
             $cachedClassName = $cachedClass;
-            if (str_contains($cachedClass, '\\')) {
+            if(str_contains($cachedClass, '\\')) {
                 //fully qualified class name
                 $parts = explode('\\', $cachedClass);
                 $cachedClassName = array_pop($parts);
@@ -67,21 +68,41 @@ class MakeCachedServiceService
 
         $rootInfo = FileOperationService::findRootForClass($class);
 
-        $interfaceRootNamespace = $rootInfo['namespace'] . 'Interface\\';
+        $interfaceRootNamespace = $rootInfo['namespace'].'Interface\\';
         $interfaceRelativeNamespace = str_replace(
             $rootInfo['namespace'],
             '',
             $namespace
         );
-        $interfaceNamespace = $interfaceRootNamespace . $interfaceRelativeNamespace;
+        $interfaceNamespace = $interfaceRootNamespace.$interfaceRelativeNamespace;
         $interfaceClassName = $shortName . 'Interface';
         $interfaceClass = $interfaceNamespace . '\\' . $interfaceClassName;
 
         $this->checkInterfaceFile(originalClass: $class, interfaceClass: $interfaceClass);
 
+        $interfaces = [
+            $interfaceClassName,
+        ];
+        if($mlcCachableServiceInstance !== null && $mlcCachableServiceInstance->getAdditionalInterface() !== null) {
+            $interfaces[] = '\\'.$mlcCachableServiceInstance->getAdditionalInterface();
+        }
+
+        $useLines = $this->getCleanedUseLinesForReflection(
+            reflection: $reflection,
+            excludeUseStrings: array_merge(
+                $this->getUseLinesFromFile(file: __DIR__.'/'.RenderTemplateService::TEMPLATE_DIRECTORY.'/Class/CachedServiceTemplate.txt'),
+                [
+                    "use {$interfaceClass};"
+                ]
+            )
+        );
+        $useLines = array_unique($useLines);
+        sort($useLines);
+
         $interfaceCode = RenderTemplateService::render('Interface/InterfaceWrapper', [
             'InterfaceNamespace' => $interfaceNamespace,
             'ServiceName' => $shortName,
+            'UseLines' => implode(PHP_EOL, $useLines),
             'DynamicInterfaceSignatures' => $dynamicMethods['interfaces'],
         ]);
 
@@ -93,14 +114,17 @@ class MakeCachedServiceService
             code: $interfaceCode
         );
 
+        $useLines[] = "use {$interfaceClass};";
+        sort($useLines);
+
         $classCode = RenderTemplateService::render('Class/CachedService', [
             'ServiceNamespace' => $namespace,
             'ServiceName' => $shortName,
             'ClassDotSeparated' => $classDotSeparated,
             'ClassUnderscoreSeparated' => $classUnderscoreSeparated,
             'ClassHyphenSeparated' => $classHyphenSeparated,
-            'InterfaceClass' => $interfaceClass,
-            'InterfaceClassName' => $interfaceClassName,
+            'UseLines' => implode(PHP_EOL, $useLines),
+            'InterfacesString' => implode(', ', $interfaces),
             'DefaultTtlSeconds' => $defaultTtl,
             'DynamicMethods' => $dynamicMethods['methods'],
         ]);
@@ -142,13 +166,13 @@ class MakeCachedServiceService
                     'status' => 'updated',
                     'message' => '',
                 ];
-            } catch (MlcUpdateCachedServiceException $e) {
+            } catch(MlcUpdateCachedServiceException $e) {
                 $updatedServices[] = [
                     'service' => $serviceName,
                     'status' => $e->getStatus(),
                     'message' => $e->getMessage(),
                 ];
-            } catch (Throwable $e) {
+            } catch(Throwable $e) {
                 $updatedServices[] = [
                     'service' => $serviceName,
                     'status' => 'error',
@@ -193,10 +217,10 @@ class MakeCachedServiceService
                     $type = $param->getType();
                     if ($type instanceof ReflectionNamedType) {
                         $types = [$type];
-                    } elseif ($type instanceof ReflectionUnionType) {
+                    } elseif($type instanceof ReflectionUnionType) {
                         $types = $type->getTypes();
                         $typeConcat = '|';
-                    } elseif ($type instanceof ReflectionIntersectionType) {
+                    } elseif($type instanceof ReflectionIntersectionType) {
                         $types = $type->getTypes();
                         $typeConcat = '&';
                     } else {
@@ -204,12 +228,12 @@ class MakeCachedServiceService
                     }
 
                     $unionTypeStrings = [];
-                    foreach ($types as $unionType) {
-                        if (!$unionType instanceof ReflectionNamedType) {
+                    foreach($types as $unionType) {
+                        if(!$unionType instanceof ReflectionNamedType) {
                             throw new RuntimeException("Unsupported parameter type for parameter \${$param->getName()} in method {$method->getName()}. Only named types are supported in union/intersection types.");
                         }
                         $unionTypeStr = '';
-                        if ($unionType->allowsNull()) {
+                        if($unionType->allowsNull()) {
                             $unionTypeStr .= '?';
                         }
                         $unionTypeStr .= $this->fixInlinedClassNames($unionType->getName());
@@ -228,7 +252,7 @@ class MakeCachedServiceService
             $returnType = $method->getReturnType();
             $returnTypeStr = '';
             if ($returnType && $returnType instanceof ReflectionNamedType) {
-                if ($returnType->allowsNull()) {
+                if($returnType->allowsNull()) {
                     $returnTypeStr .= '?';
                 }
                 $returnTypeStr .= $this->fixInlinedClassNames($returnType->getName());
@@ -249,17 +273,17 @@ class MakeCachedServiceService
                     $cacheTtl = $attributeObject->getTtlSeconds() ?? 0;
                     $methodDoc = PhpDocManipulatorService::add(
                         docComment: $methodDocOriginal,
-                        linesToAdd: "cache-ttl should be {$cacheTtl} seconds. Check Attribute in " . $serviceClass . " for details.",
+                        linesToAdd: "cache-ttl should be {$cacheTtl} seconds. Check Attribute in {$serviceClass} for details.",
                         position: 'description',
                     );
                     break;
                 }
             }
 
-            if ($isCached && !$isVoid) {
+            if($isCached && !$isVoid) {
                 $templateName = 'CacheServiceCachedMethod';
             } else {
-                if ($method->isStatic()) {
+                if($method->isStatic()) {
                     $templateName = 'CacheServiceUncachedStaticMethod';
                 } else {
                     $templateName = 'CacheServiceUncachedMethod';
@@ -290,7 +314,7 @@ class MakeCachedServiceService
                 'MethodReturnStatement' => $returnTypeStr !== 'void' ? 'return ' : '',
             ]);
 
-            if ($isCached && $method->isStatic()) {
+            if($isCached && $method->isStatic()) {
                 // For static cached methods, also generate a non-cached version
 
                 $methodDocStatic = PhpDocManipulatorService::add(
@@ -350,20 +374,29 @@ class MakeCachedServiceService
 
     public function getDefaultTtlFromOriginalClassReflection(ReflectionClass $reflection): int
     {
+        $mlcCachableServiceInstance = $this->getMlcCachableServiceFromReflection($reflection);
+        if ($mlcCachableServiceInstance === null) {
+            return self::DEFAULT_TTL_SECONDS;
+        }
+
+        return $mlcCachableServiceInstance->getDefaultTtlSeconds();
+    }
+
+    public function getMlcCachableServiceFromReflection(ReflectionClass $reflection): ?MlcCachableService
+    {
         $attribute = $reflection->getAttributes(MlcCachableService::class);
         if (empty($attribute)) {
-            return self::DEFAULT_TTL_SECONDS;
+            return null;
         }
         /**
          * @var MlcCachableService
          */
-        $attributeInstance = $attribute[0]->newInstance();
-        return $attributeInstance->getDefaultTtlSeconds();
+        return $attribute[0]->newInstance();
     }
 
     private function fixInlinedClassNames(string $typeString): string
     {
-        if (strpos($typeString, '\\') !== false && !in_array($typeString, ['int ', 'float ', 'string ', 'bool ', 'array ', 'callable ', 'iterable ', 'object ', 'mixed ', 'void '], true)) {
+        if(strpos($typeString, '\\') !== false && !in_array($typeString, ['int ', 'float ', 'string ', 'bool ', 'array ', 'callable ', 'iterable ', 'object ', 'mixed ', 'void '], true)) {
             $typeString = '\\' . $typeString;
         }
         return $typeString;
@@ -393,7 +426,7 @@ class MakeCachedServiceService
             throw new RuntimeException("Cached service class '$cachedClass' does not reference an existing service class.");
         }
 
-        if (!$attributeInstance->isSyncAllowed()) {
+        if(!$attributeInstance->isSyncAllowed()) {
             throw new MlcUpdateCachedServiceException(
                 type: 'info',
                 status: 'skipped',
@@ -415,11 +448,52 @@ class MakeCachedServiceService
 
         $interfaceContent = file_get_contents($interfaceFilePath);
 
-        if (str_contains($interfaceContent, 'Autogenerated by MLC CachedServiceGenerator')) {
+        if(str_contains($interfaceContent, 'Autogenerated by MLC CachedServiceGenerator')) {
             return;
         } else {
             throw new RuntimeException("Interface file for '$interfaceClass' already exists and is not marked as autogenerated. Please remove or rename the existing file to allow the generator to create the interface.");
         }
     }
 
+    private function getUseLinesFromFile(string $file, array $excludeUseStrings = []): array
+    {
+        $fileContent = file_get_contents($file);
+        if($fileContent === false) {
+            return [];
+        }
+
+        $useLines = [];
+        $lines = explode("\n", $fileContent);
+        foreach ($lines as $line) {
+            $lineTrimmed = trim($line);
+            if (
+                str_starts_with($lineTrimmed, 'use ')
+                && str_ends_with($lineTrimmed, ';')
+                && !in_array($lineTrimmed, $excludeUseStrings, true)
+            ) {
+                $useLines[] = $lineTrimmed;
+            } elseif(
+                str_starts_with($lineTrimmed, 'class')
+                || str_starts_with($lineTrimmed, 'interface')
+                || str_starts_with($lineTrimmed, 'function')
+            ) {
+                //stop parsing after class declaration
+                break;
+            }
+        }
+
+        $useLines = array_unique($useLines);
+        sort($useLines);
+        return $useLines;
+    }
+
+    private function getCleanedUseLinesForReflection(ReflectionClass $reflection, array $excludeUseStrings = []): array
+    {
+        $file = $reflection->getFileName();
+        if($file === false) {
+            return [];
+        }
+
+        return $this->getUseLinesFromFile($file, $excludeUseStrings);
+    }
 }
