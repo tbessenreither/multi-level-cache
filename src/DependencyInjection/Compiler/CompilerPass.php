@@ -37,7 +37,7 @@ class CompilerPass implements CompilerPassInterface
 
     private function getRootDir(): string
     {
-        return rtrim(dirname(__DIR__, 3), '/');
+        return rtrim(dirname(__DIR__, 2), '/');
     }
 
     private function processClass(ContainerBuilder $container, string $classInstance): Definition
