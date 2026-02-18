@@ -2,27 +2,11 @@
 
 A high-performance, multi-level caching system for Symfony applications. This bundle provides a flexible, extensible, and developer-friendly way to combine multiple cache backends (memory, Redis, file, etc.) for optimal speed and reliability.
 
----
+It has two parts to it.
+1. The Multi Level Cache Itself.
+2. The Cached Service Generator
 
-## Features
-- Multi-level cache (memory, Redis, file, etc.)
-- Pluggable cache implementations
-- Cache statistics and profiling (Symfony Profiler integration)
-- Beta decay and TTL randomization to prevent stampedes
-- Easy integration with Symfony Dependency Injection
-- Extensible via interfaces and factories
-- Exception handling and diagnostics
-- Autogeneration of cached version of services
-- Cache invalidation by class/method patterns for cached services
-
----
-
-## Requirements
-- PHP >= 8.4
-- Symfony >= 7.4
-- Redis (optional, for Redis cache level)
-
----
+The Main way of using this package is via the Cached Service Generator (CSG), so this will be the focus of this documentations. Details can be found [todo: write an actuall in depth documentation of the MLC] here
 
 ## Installation
 
@@ -45,213 +29,128 @@ Install via Composer from GitHub:
    ```
 3. Enable the Bundle in `config/bundles.php`:
    ```php
-   Tbessenreither\MultiLevelCache\Bundle\MultiLevelCacheBundle::class => ['all' => true],
+   Tbessenreither\MultiLevelCache\MultiLevelCacheBundle::class => ['all' => true],
    ```
 4. Configure Environment Variables as needed:
-   - `REDIS_DSN` (if using Redis)
+   - `REDIS_DSN` (if using Redis, so basically always)
    - `MLC_DISABLE_READ` (optional, disables cache reads)
    - `MLC_COLLECT_ENHANCED_DATA` (optional, enables enhanced data collection but has performance impact)
 
 ---
 
+
+# The Multi-Level-Cache (MLC)
+
+## Basic concept
+
+Its a fast multi level cache consisting, in it's standard configuration, of:
+- a fast In Memory Ring Cache
+- and a second Level Redis Cache
+
+## Most notable features
+
+- Faster and much more Memory Efficient than the Symfony Cache (We love it, but we needed something faster)
+- Cache statistics and profiling (Symfony Profiler integration)
+- Beta decay and TTL randomization to prevent stampedes
+- Exception handling and diagnostics
+
+---
+
+# The Cached Service Generator
+
+This is the main thing you hopefully will interact with as the goal of this package is to make manual cache implementations a thing of the past.
+
+## Overview
+
+This is the main way of using the MLC. The basic idea is to implement your services without any caching logic and then wrapp them within an API Compatible Wrapper (Front Loaded Caching).
+
+To create a cached version of a service you can use the `ddev mlc-make App.Service.TestService` command.
+
+Cachable Methods are marked as such with the `#[MlcCachableMethod(ttlSeconds: 300)]` attribute.
+Everything else is hands off.
+
+## Basic relation between the Source and the Cached Service
+
+![Basic Principle of the CacheGenerator](documentation/images/svg/CacheGeneratorPrinciple.svg)
+
+
 ## Usage
 
-You can use the multi-level cache in two ways:
+### Making your Service Ready for Caching
 
-### 1. Setup
-
-#### 1.1 Manual Setup in Your Service/Controller
-
-You can instantiate and configure the `MultiLevelCacheService` directly in your constructor, providing the cache implementations you want to use. The Redis client should be injected via dependency injection:
+Given this example `TestService`
 
 ```php
-use Tbessenreither\MultiLevelCache\Service\MultiLevelCacheService;
-use Tbessenreither\MultiLevelCache\Service\Implementations\InMemoryCacheService;
-use Tbessenreither\MultiLevelCache\Service\Implementations\DirectRedisCacheService;
-use Redis; // or RedisCluster
+<?php
+declare(strict_types=1);
 
-public function __construct(Redis $redisClient) {
-    $inMemory = new InMemoryCacheService();
-    $redis = new DirectRedisCacheService($redisClient);
-    $this->cache = new MultiLevelCacheService([
-        $inMemory,
-        $redis,
-    ]);
-}
-```
+namespace Tbessenreither\Example\Service;
 
-#### 1.2 Using the Factory (Recommended for Symfony DI)
-
-Inject the `MultiLevelCacheFactory` and use it to create a pre-configured cache service:
-
-```php
-use Tbessenreither\MultiLevelCache\Factory\MultiLevelCacheFactory;
-
-public function __construct(MultiLevelCacheFactory $cacheFactory) {
-    $this->cache = $cacheFactory->createDefault2LevelCache();
-}
-```
-
-### 2. Using the Cache (Identical for Both Approaches)
-
-Once you have a `MultiLevelCacheService` instance (from either method above), usage is identical:
-
-```php
-$this->cache->set('my_key', $object, 3600);
-$value = $this->cache->get('my_key', function() {
-    // This callback is called only if there is a cache miss.
-    // Return the value to be cached and returned.
-    return $expensiveComputationOrFetch();
-}, 3600);
-$this->cache->delete('my_key');
-```
-
-## Cached Service Generation
-
-> **⚠️ Note: This feature is still experimental and may be subject to changes in future releases.**
-
-
-The bundle also provides a way to autogenerate cached versions of your services. By using the `CachedServiceGenerator`, you can create cached proxies for your existing services without modifying their code. This allows you to easily add caching to any service method by simply configuring the generator.
-### Setup
-If you're using [Copycat](https://github.com/tbessenreither/php-copycat), the Package automatically provides ddev commands to generate a service (i.e `ddev mlc-make App.Service.TestService`), and update all existing generated services (i.e `ddev mlc-update`).
-
-If you don't use Copycat, first of all, why?, second: It's fine. You can find the commands in the `/bin` directory and copy them wherever you'd like.
-
-Make sure you've added the bundle to Symfony Bundles if you're using that one.
-
-#### How to create and updated cached services
-
-Easy, first you need the namespace of the Service you want to create a cached version of. Let's say `App\Service\TestService`. Oh damn, backslash sucks in cli let's make that `App.Service.TestService`. Now you can just run the make command
-```bash
-ddev mlc-make App.Service.TestService
-```
-which will output
-```text
-$ ddev mlc-make App.Service.TestService
-========================================================
-          Create or Update a cached service...
-========================================================
-
-
-Parsing command line arguments...
-| Argument   | Value                     |
-------------------------------------------
-| service    | App.Service.TestService   |
-
-Resolving service class for 'App.Service.TestService'...
-Service class found: App\Service\TestService
-
-------------------------------------
-     Generating cached service.
-------------------------------------
-
-Use statement for interface 'App\Interface\Service\TestServiceInterface' does not exists in file: /var/www/html/src/Service/TestService.php
-Attempt adding it.
-Added interface 'App\Interface\Service\TestServiceInterface' to class 'App\Service\TestService' in file: /var/www/html/src/Service/TestService.php
-
-Cached service generated successfully.
-
-| Key         | Value                                                          |
---------------------------------------------------------------------------------
-| Class       | /var/www/html/src/Service/TestServiceCached.php                |
-| Interface   | /var/www/html/src/Interface/Service/TestServiceInterface.php   |
-```
-As you can see it generated the TestServiceCached Class as well as an interface linking the cached and non cached versions together. It also added the interface to the non cached version of the service.
-
-This means they are feature compatible and you can switch them out however you like. Neat.
-
-But wait, how does the script know how long to cache method responses for and what to cache and what shoudn't? Well... it doesn't. Right now it's not caching anything. Let's fix that.
-
-For this we make use of the MlcCachableMethod Attribute.
-
-You just add this above any Method of `TestService` you want to have cached and tell it for how long via the `ttlSeconds` argument.
-```php
+use Tbessenreither\Example\Entity\HotelEntity;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachableMethod;
 
-    #[MlcCachableMethod(ttlSeconds: 600)]
-    public function reverse(string $input): string
+readonly class TestService 
+{
+    public function getHotel(string $id): HotelEntity
     {
-        return strrev($input);
+        return $this->getBrandByIri(sprintf('%s/%s', self::getApiUrl(), $id));
     }
-```
 
-Okay, now that we have annotated all Methods we want cached we need to regenerate all the cached versions of Services we did. But don't sweat, it's just one single command.
-```bash
-ddev mlc-update
-```
-Output will be something allong those lines:
-```text
-$ ddev mlc-update
-===================================================
-          Updating all cached services...
-===================================================
+    #[MlcCachableMethod(ttlSeconds: 600)]
+    public function getHotelByIri(string $iri): HotelEntity
+    {
+        $brand = $this->getObjectContent(
+            pageId: $iri,
+            query: [],
+            className: HotelEntity::class
+        );
 
---------------------------------------------------------
-     Starting update process for cached services...
---------------------------------------------------------
+        return $brand;
+    }
 
-| Service                         | Status    | Message   |
------------------------------------------------------------
-| App\Service\TestServiceCached   | updated   |           |
-
-Cached services updated. See output for details.
-```
-
-You get a table with all services that where updated including any problems that might have occured.
-
-That's it, everything is now up to date and ready to use. You can just inject the cached version directly or use the Interface and a entry in your services.yaml to descide which version to inject.
-Caching is now no longer part of your Business logic.
-
-#### Cache Invalidation
-
-This feature comes with it's own Invalidator Service.
-
-It allows you to invalidate the cache based on class or based on class and method.
-
-```php
-
-use App\Service\TestService;
-use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\InvalidatorService;
-
-public function __construct(
-   private InvalidatorService $invalidatorService,
-) {
+    // [...]
 }
-
-// Invalidate cache for a specific class
-$this->invalidatorService->invalidateCacheForClass(TestService::class);
-
-// Invalidate cache for a specific method
-$this->invalidatorService->invalidateCacheForMethod(TestService::class, 'methodName');
 ```
 
----
 
-## Configuration Example
+### Generating the cached service
 
-> **Note:** While it is possible to configure the MultiLevelCacheService directly in `services.yaml`, this approach is discouraged. The intended and recommended way is to use the `MultiLevelCacheFactory` for setup and configuration.
+We've added the Attribute to the Endpoint we want to cache. And now we need to run `ddev mlc-make Tbessenreither.Example.Service` to generate our Cache wrapper. Now the following will happen.
 
-```yaml
-# config/services.yaml
-services:
-    Tbessenreither\MultiLevelCache\Service\MultiLevelCacheService:
-        arguments:
-            $caches:
-                - '@Tbessenreither\MultiLevelCache\Service\Implementations\InMemoryCacheService'
-                - '@Tbessenreither\MultiLevelCache\Service\Implementations\DirectRedisCacheService'
-            $writeL0OnSet: true
-            $ttlRandomnessSeconds: 10
-            $cacheGroupName: 'default'
-```
+1. It will create a `TestServiceInterface` for the `TestService`.
+2. The Generator will create a wrapper under the name `TestServiceCached` that implements the `TestServiceInterface` to ensure compatibility
+3. It will add the `TestServiceInterface` to the original Class
 
----
+The Cache Wrapper is stored in the same directory as your Original `TestService` postfixed with `Cached` giving you `TestServiceCached`.
 
-## Testing
+The `TestServiceInterface` will be put into the appropriate Interface directory.
 
-Run PHPUnit tests:
-```bash
-ddev composer test
-```
+The Output of the make command will look somewhat like this:
+
+![Example Output of mlc-make](documentation/images/mlc-make_example_output.png)
+
+
+### Using the cached service
+
+You basically have two options here.
+1. You can either swap out the `TestService` for `TestServiceCached` directly as a drop in replacement
+2. Or you can inject the `TestServiceInterface` and configure the Version you want to use via the `services.yaml`
+
+Do whatever fits your needs best. The MLC has no opinions on how to do this.
+
+### Updating the cached services
+
+This is nice and all. But what if i change something in my `TestService`? Do i need to update everything again?
+
+No, good god no.
+
+You just run `ddev mlc-update`. This command will auto detect all Cache Wrappers and update them + the interfaces with the latest methods and `MlcCachableMethod` annotations.
+
+The command output will show you something like this:
+
+![Output of the ddev mlc-update command](documentation/images/mlc-update_example_output.png)
+
+If any service can't be updated (There are some reasons why this might happen) it will show this in the status collumn and print a detailed reason in the Message collumn.
 
 ---
 
