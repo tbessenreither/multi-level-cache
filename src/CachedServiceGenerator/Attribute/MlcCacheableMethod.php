@@ -16,7 +16,7 @@ use ReflectionNamedType;
 #[Attribute(Attribute::TARGET_METHOD)]
 
 
-class MlcCachableMethod
+class MlcCacheableMethod
 {
     /**
      * @var callable|null
@@ -42,7 +42,7 @@ class MlcCachableMethod
         $attributes = $method->getAttributes(self::class);
         if (empty($attributes)) {
             if ($throw) {
-                throw new InvalidArgumentException("Method {$method->getName()} is not marked as MlcCachableMethod");
+                throw new InvalidArgumentException("Method {$method->getName()} is not marked as MlcCacheableMethod");
             }
 
             return null;

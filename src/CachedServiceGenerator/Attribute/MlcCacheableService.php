@@ -8,10 +8,10 @@ use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\MakeCachedServ
 use Attribute;
 
 /**
- * To mark a service as cachable.
+ * To mark a service as cacheable.
  */
 #[Attribute(Attribute::TARGET_CLASS)]
-class MlcCachableService
+class MlcCacheableService
 {
     private int $defaultTtlSeconds;
     public function __construct(

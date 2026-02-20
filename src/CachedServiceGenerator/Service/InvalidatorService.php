@@ -1,4 +1,6 @@
-<?php declare(strict_types=1);
+<?php
+
+declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service;
 
@@ -7,29 +9,28 @@ use Tbessenreither\MultiLevelCache\Factory\MultiLevelCacheFactory;
 use Tbessenreither\MultiLevelCache\Service\Implementations\DirectRedisCacheService;
 use Tbessenreither\MultiLevelCache\Service\MultiLevelCacheService;
 
-
 class InvalidatorService
 {
-	private DirectRedisCacheService $directRedisCacheService;
+    private DirectRedisCacheService $directRedisCacheService;
 
-	public function __construct(
-		private MultiLevelCacheFactory $multiLevelCacheFactory,
-	) {
-		$this->directRedisCacheService = $multiLevelCacheFactory->getImplementationRedisWithPrefix('mlc');
-	}
+    public function __construct(
+        private MultiLevelCacheFactory $multiLevelCacheFactory,
+    ) {
+        $this->directRedisCacheService = $multiLevelCacheFactory->getImplementationRedisWithPrefix('mlc');
+    }
 
-	public function invalidateCacheForClass(string $classString): void
-	{
-		$generateKey = KeyGeneratorService::getKeyPatternForClass(new MethodCallObject($classString, '', []));
+    public function invalidateCacheForClass(string $classString): void
+    {
+        $generateKey = KeyGeneratorService::getKeyPatternForClass(new MethodCallObject($classString, '', []));
 
-		$this->directRedisCacheService->deleteByPattern($generateKey);
-	}
+        $this->directRedisCacheService->deleteByPattern($generateKey);
+    }
 
-	public function invalidateCacheForMethod(string $classString, string $method): void
-	{
-		$generateKey = KeyGeneratorService::getKeyPatternForMethod(new MethodCallObject($classString, $method, []));
+    public function invalidateCacheForMethod(string $classString, string $method): void
+    {
+        $generateKey = KeyGeneratorService::getKeyPatternForMethod(new MethodCallObject($classString, $method, []));
 
-		$this->directRedisCacheService->deleteByPattern($generateKey);
-	}
+        $this->directRedisCacheService->deleteByPattern($generateKey);
+    }
 
 }

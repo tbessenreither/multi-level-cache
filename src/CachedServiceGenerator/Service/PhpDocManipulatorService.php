@@ -13,15 +13,15 @@ class PhpDocManipulatorService
             $docComment = "/**\n*/";
         }
 
-        if(!is_array($linesToAdd)) {
+        if (!is_array($linesToAdd)) {
             $linesToAdd = [$linesToAdd];
         }
 
         $docComment = trim($docComment, '/* ');
         $docLines = explode("\n", $docComment);
-        //remove trim spaces and leading * from lines
+        // remove trim spaces and leading * from lines
         $docLines = array_map(fn ($line) => trim(ltrim($line, '* ')), $docLines);
-        //remove leading and trailing empty lines
+        // remove leading and trailing empty lines
         while (!empty($docLines) && trim($docLines[0]) === '') {
             array_shift($docLines);
         }
@@ -30,7 +30,7 @@ class PhpDocManipulatorService
         }
 
         if ($position === 'description') {
-            //find the first line with an @ and insert above if no line found insert at end of description
+            // find the first line with an @ and insert above if no line found insert at end of description
             $inserted = false;
             for ($i = 0; $i < count($docLines); $i++) {
                 if (str_starts_with($docLines[$i], '@')) {
@@ -42,8 +42,8 @@ class PhpDocManipulatorService
             if (!$inserted) {
                 $docLines = array_merge($docLines, $linesToAdd);
             }
-        } elseif($position === '@') {
-            //find the last line with an @ and insert below, if no line found insert at end
+        } elseif ($position === '@') {
+            // find the last line with an @ and insert below, if no line found insert at end
             $inserted = false;
             for ($i = count($docLines) - 1; $i >= 0; $i--) {
                 if (str_starts_with($docLines[$i], '@')) {
@@ -57,24 +57,30 @@ class PhpDocManipulatorService
             }
         }
 
-        //rebuild doc comment with /** at the start and */ at the end. Each line prefixed with *
-        $finalDoc = "    /**\n";
+        // rebuild doc comment with /** at the start and */ at the end. Each line prefixed with *
+        $finalDoc = "/**\n";
         foreach ($docLines as $line) {
-            $finalDoc .= '    * ' . $line . "\n";
+            $finalDoc .= '* ' . $line . "\n";
         }
-        $finalDoc .= "    */";
+        $finalDoc .= "*/";
 
-        return $finalDoc;
+        return self::indent($finalDoc);
     }
 
-    public static function indent(string|false $docComment): string
+    public static function indent(string|false $docComment, int $level = 1): string
     {
-        if($docComment === false) {
+        if ($docComment === false) {
             return '';
         }
-        $indent = '    ';
         $lines = explode("\n", $docComment);
-        $indentedLines = array_map(fn ($line) => $indent . trim($line), $lines);
+        $indentedLines = array_map(function ($line) use ($level) {
+            $trimmedLine = trim($line);
+            $indent = str_repeat('    ', $level);
+            if (str_starts_with($trimmedLine, '*')) {
+                $indent .= ' ';
+            }
+            return $indent . $trimmedLine;
+        }, $lines);
         return implode("\n", $indentedLines);
     }
 }

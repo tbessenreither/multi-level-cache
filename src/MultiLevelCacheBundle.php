@@ -16,6 +16,10 @@ class MultiLevelCacheBundle extends Bundle
     {
         parent::build($container);
 
+        if ($container->isCompiled()) {
+            return;
+        }
+
         $container->addCompilerPass(new CompilerPass());
 
         $this->processMultiLevelCacheServiceCollector($container);
