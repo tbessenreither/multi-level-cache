@@ -12,26 +12,19 @@ The Main way of using this package is via the Cached Service Generator (CSG), so
 
 Install via Composer from GitHub:
 
-1. Add the repository to your `composer.json`:
-   ```json
-   {
-     "repositories": [
-       {
-         "type": "vcs",
-         "url": "https://github.com/tbessenreither/multi-level-cache"
-       }
-     ]
-   }
-   ```
-2. Require the package:
+1. Require the package:
    ```bash
    composer require tbessenreither/multi-level-cache
    ```
-3. Enable the Bundle in `config/bundles.php`:
+
+> [!TIP]
+> The following steps can be automated by using [Copycat](https://github.com/tbessenreither/copycat)
+
+2. Enable the Bundle in `config/bundles.php`:
    ```php
    Tbessenreither\MultiLevelCache\MultiLevelCacheBundle::class => ['all' => true],
    ```
-4. Configure Environment Variables as needed:
+3. Configure Environment Variables as needed:
    - `REDIS_DSN` (if using Redis, so basically always)
    - `MLC_DISABLE_READ` (optional, disables cache reads)
    - `MLC_COLLECT_ENHANCED_DATA` (optional, enables enhanced data collection but has performance impact)
@@ -89,7 +82,7 @@ namespace Tbessenreither\Example\Service;
 use Tbessenreither\Example\Entity\HotelEntity;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachableMethod;
 
-readonly class TestService 
+readonly class TestService
 {
     public function getHotel(string $id): HotelEntity
     {
