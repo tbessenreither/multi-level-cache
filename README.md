@@ -79,23 +79,23 @@ declare(strict_types=1);
 
 namespace Tbessenreither\Example\Service;
 
-use Tbessenreither\Example\Entity\HotelEntity;
+use Tbessenreither\Example\Entity\ExampleEntity;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachableMethod;
 
 readonly class TestService
 {
-    public function getHotel(string $id): HotelEntity
+    public function getOffers(string $id): ExampleEntity
     {
         return $this->getBrandByIri(sprintf('%s/%s', self::getApiUrl(), $id));
     }
 
     #[MlcCachableMethod(ttlSeconds: 600)]
-    public function getHotelByIri(string $iri): HotelEntity
+    public function getOffersByIri(string $iri): ExampleEntity
     {
         $brand = $this->getObjectContent(
             pageId: $iri,
             query: [],
-            className: HotelEntity::class
+            className: ExampleEntity::class
         );
 
         return $brand;
@@ -118,10 +118,6 @@ The Cache Wrapper is stored in the same directory as your Original `TestService`
 
 The `TestServiceInterface` will be put into the appropriate Interface directory.
 
-The Output of the make command will look somewhat like this:
-
-![Example Output of mlc-make](documentation/images/mlc-make_example_output.png)
-
 
 ### Using the cached service
 
@@ -138,10 +134,6 @@ This is nice and all. But what if i change something in my `TestService`? Do i n
 No, good god no.
 
 You just run `ddev mlc-update`. This command will auto detect all Cache Wrappers and update them + the interfaces with the latest methods and `MlcCachableMethod` annotations.
-
-The command output will show you something like this:
-
-![Output of the ddev mlc-update command](documentation/images/mlc-update_example_output.png)
 
 If any service can't be updated (There are some reasons why this might happen) it will show this in the status collumn and print a detailed reason in the Message collumn.
 
