@@ -12,6 +12,7 @@ use Tbessenreither\MultiLevelCache\Exception\CacheConnectionException;
 use Tbessenreither\MultiLevelCache\Interface\CacheInformationInterface;
 use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
 
+
 /**
  * This should be the prefered way to connect to Redis for caching, as it avoids the overhead of our common cache adapter.
  * It uses direct Redis commands to store and retrieve serialized cache objects.
@@ -20,6 +21,7 @@ use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterf
  */
 class DirectRedisCacheService implements MultiLevelCacheImplementationInterface, CacheInformationInterface
 {
+
     public function __construct(
         private Redis|RedisCluster $redisClient,
         private ?string $keyPrefix = null,
@@ -95,13 +97,23 @@ class DirectRedisCacheService implements MultiLevelCacheImplementationInterface,
 
     public function getConfiguration(): array
     {
-        return [
-            'prefix' => $this->keyPrefix,
-            'cacheAdapter' => $this->redisClient::class,
-            'redisHost' => $this->redisClient->getHost(),
-            'redisPort' => $this->redisClient->getPort(),
-            'serialization' => 'php_serialize',
-        ];
+        if ($this->redisClient instanceof RedisCluster) {
+            return [
+                'prefix' => $this->keyPrefix,
+                'cacheAdapter' => $this->redisClient::class,
+                'redisHost' => null,
+                'redisPort' => null,
+                'serialization' => 'php_serialize',
+            ];
+        } else {
+            return [
+                'prefix' => $this->keyPrefix,
+                'cacheAdapter' => $this->redisClient::class,
+                'redisHost' => $this->redisClient->getHost(),
+                'redisPort' => $this->redisClient->getPort(),
+                'serialization' => 'php_serialize',
+            ];
+        }
     }
 
     private function getPrefixedRedisCacheKey(string $key): string
