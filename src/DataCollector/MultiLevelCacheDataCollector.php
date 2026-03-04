@@ -16,15 +16,17 @@ use Symfony\Component\HttpKernel\DataCollector\DataCollector;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 use Throwable;
 
+
 class MultiLevelCacheDataCollector extends DataCollector implements DataCollectorInterface
 {
     public const NAME = 'tbessenreither.multi_level_cache_service_collector';
     public const TEMPLATE = '@TbessenreitherMultiLevelCache/Profiler/multi_level_cache_service_collector.html.twig';
 
     public function __construct(
+        #[Autowire('%env(string:APP_ENV)%')]
         private readonly string $appEnv,
         #[Autowire('%env(defined:MLC_COLLECT_ENHANCED_DATA)%')]
-        readonly bool $enhancedDataCollection = false,
+        private readonly bool $enhancedDataCollection = false,
     ) {
         $this->data['collectedIssues'] = [];
     }
@@ -265,7 +267,7 @@ class MultiLevelCacheDataCollector extends DataCollector implements DataCollecto
         return !empty($this->data['collectedIssues']);
     }
 
-    private function getStatisticsObject(string $cacheGroupName, int $cacheLevel): CacheStatistics
+    private function getStatisticsObject(string $cacheGroupName, int $cacheLevel): ?CacheStatistics
     {
         /**
          * @var DataCollectorCacheInfoDto|null $dataCollectorCacheInfoDto
@@ -275,11 +277,11 @@ class MultiLevelCacheDataCollector extends DataCollector implements DataCollecto
 
         if ($fetchedObject === null) {
             $fetchedObject = new CacheStatistics();
-            if (!isset($this->data['grouped_instances'][$cacheGroupName])) {
-                throw new InvalidArgumentException('Cache group not found when trying to get statistics object');
-            }
-            if (!isset($this->data['grouped_instances'][$cacheGroupName][$cacheLevel])) {
-                throw new InvalidArgumentException('Cache level not found when trying to get statistics object');
+            if (
+                !isset($this->data['grouped_instances'][$cacheGroupName])
+                || !isset($this->data['grouped_instances'][$cacheGroupName][$cacheLevel])
+            ) {
+                return null;
             }
         }
 
