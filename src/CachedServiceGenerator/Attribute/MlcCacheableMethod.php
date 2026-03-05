@@ -26,6 +26,7 @@ class MlcCacheableMethod
     public function __construct(
         private int $ttlSeconds,
         ?callable $keyGenerator = null,
+        private ?string $dataVersion = null,
     ) {
         if ($ttlSeconds <= 0) {
             throw new InvalidArgumentException('TTL must be a positive integer.');
@@ -68,6 +69,11 @@ class MlcCacheableMethod
         }
 
         return $this->keyGeneratorCallable;
+    }
+
+    public function getDataVersion(): ?string
+    {
+        return $this->dataVersion;
     }
 
     /**
