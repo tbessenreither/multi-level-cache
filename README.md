@@ -86,7 +86,7 @@ readonly class TestService
 {
     public function getOffers(string $id): ExampleEntity
     {
-        return $this->getBrandByIri(sprintf('%s/%s', self::getApiUrl(), $id));
+        return $this->getOffersByIri(sprintf('%s/%s', self::getApiUrl(), $id));
     }
 
     #[MlcCachableMethod(ttlSeconds: 600)]
@@ -118,6 +118,9 @@ The Cache Wrapper is stored in the same directory as your Original `TestService`
 
 The `TestServiceInterface` will be put into the appropriate Interface directory.
 
+Example Output of the `ddev mlc-make` command:
+![mlc-make Command Output Example](documentation/images/mlc-make.png)
+
 
 ### Using the cached service
 
@@ -137,7 +140,14 @@ You just run `ddev mlc-update`. This command will auto detect all Cache Wrappers
 
 If any service can't be updated (There are some reasons why this might happen) it will show this in the status collumn and print a detailed reason in the Message collumn.
 
+Example Output of the `ddev mlc-update` command:
+![mlc-update Command Output Example](documentation/images/mlc-update.png)
+
 ---
+
+## MultiLevelCacheService and MultiLevelCacheFactory
+
+For details on how to use the MLC Service and Factory directly, please refer to the documentation [here](documentation/mlc-service-and-factory.md)
 
 ## License
 
