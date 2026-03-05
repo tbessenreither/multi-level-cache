@@ -59,7 +59,7 @@ $cacheService->delete('my_cache_key');
 
 ## Advanced Usage / Constructor
 
-If you want to create your own instance of the `MultiLevelCacheService` without using the Factory, you can do so by providing an array of cache levels that implement the `MultiLevelCacheImplementationInterface`. This is a more advanced use case and is not recommended for most use cases.
+If you want to create your own instance of the `MultiLevelCacheService` without using the Factory, you can do so by providing an array of cache levels that implement the `MultiLevelCacheImplementationInterface`. This is probably only required for "weird edge cases" and is not recommended for most scenarios.
 
 That being said, i'm a strong believer in foot-canons. If you need to shoot a foot, who am i to tell you no, i don't know your system.
 
