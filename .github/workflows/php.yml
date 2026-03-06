@@ -17,25 +17,21 @@ jobs:
 
     steps:
       - name: Checkout repository
-        run: |
-          git clone https://github.com/${{ github.repository }} .
-          git checkout ${{ github.sha }}
+        uses: actions/checkout@v4
 
       - name: Install system dependencies
         run: |
           apt-get update
           apt-get install -y git unzip curl
 
-      - name: Install Composer (official installer)
+      - name: Install Composer
         run: |
           curl -sS https://getcomposer.org/installer -o composer-setup.php
           php composer-setup.php --install-dir=/usr/local/bin --filename=composer
           composer --version
 
-      - name: Install PHP dependencies
-        run: |
-          composer install --no-interaction --prefer-dist
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist
 
-      - name: Run PHPUnit via composer script
-        run: |
-          composer run-script test
+      - name: Run tests
+        run: composer run-script test
