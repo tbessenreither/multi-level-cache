@@ -141,6 +141,7 @@ class CacheStatisticsTest extends TestCase
             'default_ttl' => 3600,
             'cache_provider' => 'redis',
             'compression' => false,
+            'null_value' => null,
         ];
 
         $stats->setConfigDataArray($configData);

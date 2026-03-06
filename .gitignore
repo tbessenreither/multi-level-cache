@@ -37,3 +37,4 @@ Thumbs.db
 
 # php cs fixer
 .php-cs-fixer.cache
+bin/namespace_convert.sh

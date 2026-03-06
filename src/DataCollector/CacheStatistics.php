@@ -120,7 +120,7 @@ class CacheStatistics
         $this->runtimeTracker = microtime(true);
     }
 
-    public function setConfigData(string $key, int|float|string|bool $value): void
+    public function setConfigData(string $key, int|float|string|bool|null $value): void
     {
         $this->configData[$key] = $value;
     }
