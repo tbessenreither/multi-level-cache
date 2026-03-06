@@ -1,3 +1,12 @@
+Index:
+- [MultiLevelCacheService](#multilevelcacheservice)
+- [MultiLevelCacheFactory](#multilevelcachefactory)
+- [InvalidatorService](#invalidatorservice)
+
+-----------------
+
+
+
 # MultiLevelCacheService
 
 The `MultiLevelCacheService` is the core of the Multi Level Cache. It is responsible for handling the caching logic and providing a simple interface for caching your data.
@@ -234,3 +243,33 @@ Last but not least, the Cache Groups section. Here you can see the performance m
 This section is why you really want to set your `cacheGroupNamec` in the Factory when creating your cache service.
 
 ![MLC Cache Group Example](images/profiler_cache_groups.png)
+
+# InvalidatorService
+
+If you generate a Cached Service, one more benefit you get is the `InvalidatorService`.
+
+In short it allows you to easily invalidate cache entries for a given Service Class, or a specific method of a Service.
+
+So, how does it work?
+
+You inject the `InvalidatorService` into your Service and then you can call either the `invalidateCacheForClass` or the `invalidateCacheForMethod` method with the appropriate arguments.
+
+```php
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\InvalidatorService;
+
+readonly class MyService
+{
+	public function __construct(
+		private InvalidatorService $invalidatorService,
+	) {}
+
+	public function invalidateThings():void {
+		// This will invalidate all cache entries for the SomeService class, regardless of the method.
+		$this->invalidatorService->invalidateCacheForClass(SomeService::class);
+
+		// This will invalidate all cache entries for the someMethod of the SomeService class.
+		// All other cache entries for the SomeService class that are not related to someMethod will not be affected.
+		$this->invalidatorService->invalidateCacheForMethod(AnotherService::class, 'someMethod');
+	}
+}
+```
