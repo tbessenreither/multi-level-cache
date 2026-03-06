@@ -26,9 +26,8 @@ jobs:
 
       - name: Install Redis PHP extension
         run: |
-          pecl install redis
-          docker-php-ext-enable redis
-          php -r "echo class_exists('Redis') ? 'Redis extension loaded' : 'Redis missing';"
+          pecl install redis pcov
+          docker-php-ext-enable redis pcov
 
       - name: Install Composer
         run: |
