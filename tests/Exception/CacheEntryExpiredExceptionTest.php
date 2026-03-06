@@ -13,7 +13,6 @@ use Tbessenreither\MultiLevelCache\Exception\CacheEntryExpiredException;
 
 class CacheEntryExpiredExceptionTest extends TestCase
 {
-
     public function testExceptionMessage(): void
     {
         $exception = new CacheEntryExpiredException('Entry expired');

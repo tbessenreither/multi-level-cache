@@ -13,7 +13,6 @@ use Tbessenreither\MultiLevelCache\Exception\CacheBetaDecayException;
 
 class CacheBetaDecayExceptionTest extends TestCase
 {
-
     public function testExceptionMessage(): void
     {
         $exception = new CacheBetaDecayException('Test message');

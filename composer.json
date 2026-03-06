@@ -21,7 +21,8 @@
         "phpunit/phpunit": "^11.0",
         "symfony/phpunit-bridge": "^7.3",
         "symfony/stopwatch": "^7.3",
-        "tbessenreither/copycat": "^0.7.1"
+        "tbessenreither/copycat": "^0.7.1",
+        "friendsofphp/php-cs-fixer": "^3.94"
     },
     "autoload": {
         "psr-4": {

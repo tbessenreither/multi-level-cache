@@ -24,7 +24,6 @@ use stdClass;
 
 class MultiLevelCacheDataCollectorTest extends TestCase
 {
-
     public function testAddInstanceAndRegisterMethods(): void
     {
         $collector = new MultiLevelCacheDataCollector('dev', true);
@@ -110,31 +109,30 @@ class MultiLevelCacheDataCollectorTest extends TestCase
 
 
             new class () implements DataCollectorIssueEnumInterface {
+                public function getName(): string
+                {
+                    return 'TEST_ISSUE';
+                }
 
-            public function getName(): string
-            {
-                return 'TEST_ISSUE';
-            }
+                public function getDescription(): string
+                {
+                    return 'some value';
+                }
 
-            public function getDescription(): string
-            {
-                return 'some value';
-            }
+                public function getType(): string
+                {
+                    return 'warning';
+                }
 
-            public function getType(): string
-            {
-                return 'warning';
-            }
+                public function getBadgeClass(): string
+                {
+                    return 'badge';
+                }
 
-            public function getBadgeClass(): string
-            {
-                return 'badge';
-            }
-
-            public function getStatusClass(): string
-            {
-                return 'status';
-            }
+                public function getStatusClass(): string
+                {
+                    return 'status';
+                }
             };
 
         $collectorDev->raiseIssue($issue);

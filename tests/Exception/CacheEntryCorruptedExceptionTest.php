@@ -13,7 +13,6 @@ use Tbessenreither\MultiLevelCache\Exception\CacheEntryCorruptedException;
 
 class CacheEntryCorruptedExceptionTest extends TestCase
 {
-
     public function testExceptionMessage(): void
     {
         $exception = new CacheEntryCorruptedException('Corrupted entry');

@@ -9,10 +9,8 @@ use Tbessenreither\MultiLevelCache\Interface\CacheInformationInterface;
 use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
 use stdClass;
 
-
 class NoopImplementation implements MultiLevelCacheImplementationInterface, CacheInformationInterface
 {
-
     public function set(string $key, CacheObjectWrapperDto $value): void
     {
     }

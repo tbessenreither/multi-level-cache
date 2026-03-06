@@ -14,7 +14,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 class CacheObjectWrapperDtoTest extends TestCase
 {
-
     public function testGettersAndSetters(): void
     {
         $object = (object) ['key' => 'value'];

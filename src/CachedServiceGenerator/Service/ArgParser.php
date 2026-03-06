@@ -18,10 +18,10 @@ class ArgParser
             if (str_starts_with($arg, '--')) {
                 $argTrimmed = trim(substr($arg, 2));
 
-                if(empty($argTrimmed)) {
+                if (empty($argTrimmed)) {
                     continue;
                 }
-                if(str_contains($argTrimmed, '=')) {
+                if (str_contains($argTrimmed, '=')) {
                     $parts = explode('=', $argTrimmed, 2);
                 } else {
                     $parts = [$argTrimmed];
@@ -29,7 +29,7 @@ class ArgParser
 
                 $key = mb_strtolower(array_shift($parts));
 
-                if(count($parts) === 0) {
+                if (count($parts) === 0) {
                     $result[$key] = true;
                 } else {
                     $value = implode('=', $parts);

@@ -12,7 +12,6 @@ use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheable
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
 use Throwable;
 
-
 class KeyGeneratorService
 {
     /**

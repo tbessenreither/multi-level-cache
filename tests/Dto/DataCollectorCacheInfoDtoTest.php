@@ -14,7 +14,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 
 class DataCollectorCacheInfoDtoTest extends TestCase
 {
-
     public function testGettersAndSetters(): void
     {
         $groupName = 'testGroup';

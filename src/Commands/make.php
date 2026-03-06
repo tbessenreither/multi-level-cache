@@ -38,7 +38,7 @@ try {
         ),
     );
 
-    if(!isset($arguments['service'])) {
+    if (!isset($arguments['service'])) {
         PrintTools::error("No service specified. Use --service=App.Service.ExampleService to specify the service.");
         exit(1);
     }
@@ -55,7 +55,7 @@ try {
     $service = new MakeCachedServiceService();
     $targetFile = $service->generateCachedService($serviceClass);
 
-    if(!$targetFile) {
+    if (!$targetFile) {
         PrintTools::error("Failed to generate cached service for '{$serviceClass}'.");
         exit(1);
     }

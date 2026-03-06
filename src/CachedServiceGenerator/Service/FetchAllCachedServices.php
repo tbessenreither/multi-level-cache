@@ -85,7 +85,7 @@ class FetchAllCachedServices
                 $fqcn = $namespace !== '' ? $namespace . '\\' . $className : $className;
             }
 
-            if($fqcn === '') {
+            if ($fqcn === '') {
                 continue;
             }
 
@@ -93,7 +93,7 @@ class FetchAllCachedServices
             $reflection = new ReflectionClass($fqcn);
             $attributes = $reflection->getAttributes(MlcCachedService::class);
 
-            if(count($attributes) === 0) {
+            if (empty($attributes)) {
                 continue;
             }
             /** @var MlcCachedService $cachedServiceAttr */

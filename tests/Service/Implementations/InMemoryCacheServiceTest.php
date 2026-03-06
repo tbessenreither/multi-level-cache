@@ -15,7 +15,6 @@ use PHPUnit\Framework\TestCase;
 
 class InMemoryCacheServiceTest extends TestCase
 {
-
     public function testDefaultBehavior(): void
     {
         $cache = new InMemoryCacheService(maxSize: 2);

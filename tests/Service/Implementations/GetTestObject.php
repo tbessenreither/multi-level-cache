@@ -7,10 +7,8 @@ namespace Tbessenreither\MultiLevelCache\Tests\Service\Implementations;
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
 use stdClass;
 
-
 class GetTestObject
 {
-
     public static function getTestObject(string $testData): stdClass
     {
         $obj = new stdClass();

@@ -15,7 +15,7 @@ class MlcUpdateCachedServiceException extends RuntimeException
         string $message = '',
         ?Throwable $previous = null,
     ) {
-        if(!in_array($type, ['info', 'warning', 'error'], true)) {
+        if (!in_array($type, ['info', 'warning', 'error'], true)) {
             $type = 'error';
         }
         parent::__construct($message, 0, $previous);

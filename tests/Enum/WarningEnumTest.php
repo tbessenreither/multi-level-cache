@@ -16,7 +16,6 @@ use Tbessenreither\MultiLevelCache\Enum\WarningEnum;
 
 final class WarningEnumTest extends TestCase
 {
-
     public function testCasesProvideExpectedFields(): void
     {
         foreach (WarningEnum::cases() as $case) {

@@ -12,7 +12,6 @@ use Tbessenreither\MultiLevelCache\Exception\CacheConnectionException;
 use Tbessenreither\MultiLevelCache\Interface\CacheInformationInterface;
 use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
 
-
 /**
  * This should be the prefered way to connect to Redis for caching, as it avoids the overhead of our common cache adapter.
  * It uses direct Redis commands to store and retrieve serialized cache objects.
@@ -21,7 +20,6 @@ use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterf
  */
 class DirectRedisCacheService implements MultiLevelCacheImplementationInterface, CacheInformationInterface
 {
-
     public function __construct(
         private Redis|RedisCluster $redisClient,
         private ?string $keyPrefix = null,

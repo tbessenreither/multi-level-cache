@@ -14,11 +14,11 @@ class PrintTools
         $maxLengths = array_map('strlen', $headers);
         foreach ($rows as $row) {
             $rowConverted = [];
-            foreach($headers as $index => $header) {
+            foreach ($headers as $index => $header) {
                 $value = array_shift($row);
-                if(is_bool($value)) {
+                if (is_bool($value)) {
                     $value = $value ? 'true' : 'false';
-                } elseif(!is_string($value)) {
+                } elseif (!is_string($value)) {
                     ob_start();
                     print_r($value, true);
                     $value = ob_get_clean();

@@ -17,10 +17,10 @@ class RenderTemplateService
     {
         $template = self::getTemplate($templateName);
         foreach ($placeholders as $key => $value) {
-            if($value === null || $value === false) {
+            if ($value === null || $value === false) {
                 $value = '';
             }
-            if(!is_string($value)) {
+            if (!is_string($value)) {
                 $value = (string)$value;
             }
             $template = str_replace("/*{{$key}}*/", $value, $template);

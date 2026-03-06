@@ -16,7 +16,6 @@ use Tbessenreither\MultiLevelCache\Enum\WarningEnum;
 
 class DataCollectorIssueDtoTest extends TestCase
 {
-
     public function testGettersAndSetters(): void
     {
         $object = new DataCollectorIssueDto(

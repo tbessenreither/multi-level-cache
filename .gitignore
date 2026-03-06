@@ -34,3 +34,6 @@ Thumbs.db
 # Build artifacts
 /build/
 /dist/
+
+# php cs fixer
+.php-cs-fixer.cache

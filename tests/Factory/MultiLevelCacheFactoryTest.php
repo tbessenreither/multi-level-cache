@@ -26,7 +26,6 @@ use Tbessenreither\MultiLevelCache\Exception\CacheConnectionException;
 
 class MultiLevelCacheFactoryTest extends TestCase
 {
-
     private function makeFactoryWithInjectedDeps(?Redis $redisMock = null): MultiLevelCacheFactory
     {
         $redisMock ??= $this->createMock(Redis::class);
@@ -37,10 +36,9 @@ class MultiLevelCacheFactoryTest extends TestCase
 
 
             new class () extends MultiLevelCacheFactory {
-
-            public function __construct()
-            {
-            }
+                public function __construct()
+                {
+                }
             };
 
         $rc = new ReflectionClass(MultiLevelCacheFactory::class);

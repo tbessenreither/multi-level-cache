@@ -16,7 +16,6 @@ use Tbessenreither\MultiLevelCache\Enum\ErrorEnum;
 
 final class ErrorEnumTest extends TestCase
 {
-
     public function testCasesProvideExpectedFields(): void
     {
         foreach (ErrorEnum::cases() as $case) {

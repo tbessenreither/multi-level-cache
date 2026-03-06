@@ -302,7 +302,7 @@ class MultiLevelCacheServiceTest extends TestCase
             ttlRandomnessSeconds: 0,
         );
 
-        $result = $service->get($key, fn() => 'some string', 300);
+        $result = $service->get($key, fn () => 'some string', 300);
         $this->assertEquals('some string', $result);
     }
 
@@ -706,7 +706,7 @@ class MultiLevelCacheServiceTest extends TestCase
 
             new class () {
             },
-            fn() => null,
+            fn () => null,
             new DateTime(),
             array(),
         ];
@@ -750,7 +750,7 @@ class MultiLevelCacheServiceTest extends TestCase
             new class () {
             }
         ];
-        yield [fn() => null];
+        yield [fn () => null];
         yield [new DateTime()];
     }
 
