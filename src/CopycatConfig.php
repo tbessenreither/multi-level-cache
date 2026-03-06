@@ -34,7 +34,7 @@ class CopycatConfig implements CopycatConfigInterface
             target: EnvTargetEnum::DOT_EXAMPLE,
             entries: [
                 'REDIS_DSN' => 'redis://redis:6379',
-                'MLC_DISABLE_READ' => false,
+                'MLC_DISABLE_READ' => 'does not matter, this var existing will disable reads',
                 'MLC_COLLECT_ENHANCED_DATA' => false,
             ],
             overwrite: true,
@@ -43,7 +43,6 @@ class CopycatConfig implements CopycatConfigInterface
             target: EnvTargetEnum::DOT_LOCAL,
             entries: [
                 'REDIS_DSN' => 'redis://redis:6379',
-                'MLC_DISABLE_READ' => false,
                 'MLC_COLLECT_ENHANCED_DATA' => false,
             ],
             overwrite: false,
