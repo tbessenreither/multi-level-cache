@@ -35,6 +35,14 @@ jobs:
           php composer-setup.php --install-dir=/usr/local/bin --filename=composer
           composer --version
 
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-
+
       - name: Install composer dependencies
         run: composer install --no-interaction --prefer-dist
 
