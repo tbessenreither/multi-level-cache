@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+## Description: Runs PHP-CS-Fixer on all files.
+## usage: ddev fix
+
+echo "run php-cs-fixer on all files"
+
+php vendor/bin/php-cs-fixer fix --config=.php-cs-fixer.php

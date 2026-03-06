@@ -59,7 +59,7 @@ This is the main way of using the MLC. The basic idea is to implement your servi
 
 To create a cached version of a service you can use the `ddev mlc-make App.Service.TestService` command.
 
-Cachable Methods are marked as such with the `#[MlcCachableMethod(ttlSeconds: 300)]` attribute.
+Cacheable Methods are marked as such with the `#[MlcCacheableMethod(ttlSeconds: 300)]` attribute.
 Everything else is hands off.
 
 ## Basic relation between the Source and the Cached Service
@@ -80,7 +80,7 @@ declare(strict_types=1);
 namespace Tbessenreither\Example\Service;
 
 use Tbessenreither\Example\Entity\ExampleEntity;
-use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachableMethod;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableMethod;
 
 readonly class TestService
 {
@@ -89,7 +89,7 @@ readonly class TestService
         return $this->getOffersByIri(sprintf('%s/%s', self::getApiUrl(), $id));
     }
 
-    #[MlcCachableMethod(ttlSeconds: 600)]
+    #[MlcCacheableMethod(ttlSeconds: 600)]
     public function getOffersByIri(string $iri): ExampleEntity
     {
         $brand = $this->getObjectContent(
@@ -136,7 +136,7 @@ This is nice and all. But what if i change something in my `TestService`? Do i n
 
 No, good god no.
 
-You just run `ddev mlc-update`. This command will auto detect all Cache Wrappers and update them + the interfaces with the latest methods and `MlcCachableMethod` annotations.
+You just run `ddev mlc-update`. This command will auto detect all Cache Wrappers and update them + the interfaces with the latest methods and `MlcCacheableMethod` annotations.
 
 If any service can't be updated (There are some reasons why this might happen) it will show this in the status collumn and print a detailed reason in the Message collumn.
 
