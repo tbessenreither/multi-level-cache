@@ -63,7 +63,7 @@ class MultiLevelCacheService
      * stores the object in the lowest level cache
      * if writeL0OnSet is true, it also writes to level 0 cache
      */
-    public function set(string $key, object|string|int|float|bool|array $object, int $ttlSeconds): void
+    public function set(string $key, object|string|int|float|bool|array|null $object, int $ttlSeconds): void
     {
         if (is_string($object)) {
             $this->raiseIssue(WarningEnum::WARNING_STORED_STRING_VALUE);

@@ -362,6 +362,43 @@ class MultiLevelCacheServiceTest extends TestCase
         $this->assertSame($cacheValue, $cacheService->get(key: $cacheKey));
     }
 
+    public function testInputTypes(): void
+    {
+        $cacheService = new MultiLevelCacheService(
+            caches: [
+                new InMemoryCacheService(
+                    5,
+                ),
+            ],
+            writeL0OnSet: true,
+            stopwatch: null,
+            ttlRandomnessSeconds: 0,
+        );
+
+        $validInputs = [
+            #Objects
+            (object) ['property' => 'value'],
+            #Strings
+            'string value',
+            #Int
+            123,
+            #Float
+            45.67,
+            #Bool
+            true,
+            false,
+            #Array
+            ['array', 'of', 'values'],
+            #Null
+            null,
+        ];
+
+        foreach ($validInputs as $input) {
+            $cacheService->set(key: 'key', object: $input, ttlSeconds: 300);
+            $this->assertSame($input, $cacheService->get(key: 'key'));
+        }
+    }
+
     private function fixYieldedConfiguration(array &$configuration)
     {
         $caches = [];

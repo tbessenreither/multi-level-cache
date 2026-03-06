@@ -38,7 +38,7 @@ $cacheService->get(
 You can also set the cache value directly without using the get function. This can be useful if you want to pre-populate the cache or if you want to update the cache value without fetching it first.
 
 ```php
-public function set(string $key, object|string|int|float|bool|array $object, int $ttlSeconds): void
+public function set(string $key, object|string|int|float|bool|array|null $object, int $ttlSeconds): void
 
 $cacheService->set(
 	key: 'my_cache_key',
