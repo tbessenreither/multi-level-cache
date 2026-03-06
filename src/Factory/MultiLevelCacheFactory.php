@@ -57,7 +57,7 @@ class MultiLevelCacheFactory
         return match ($type) {
             CacheTypeEnum::IN_MEMORY => $this->createInMemoryOnlyCache($inMemoryCacheMaxSize, $writeL0OnSet, $cacheGroupName),
             CacheTypeEnum::REDIS => $this->createRedisOnlyCache($redisKeyPrefix, $writeL0OnSet, $cacheGroupName),
-            #CacheTypeEnum::DEFAULT => $this->createDefault2LevelCache($inMemoryCacheMaxSize, $redisKeyPrefix, $writeL0OnSet, $cacheGroupName),
+            CacheTypeEnum::DEFAULT => $this->createDefault2LevelCache($inMemoryCacheMaxSize, $redisKeyPrefix, $writeL0OnSet, $cacheGroupName),
         };
     }
 
