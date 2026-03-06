@@ -1,39 +1,41 @@
-name: PHP Composer
+name: PHP Unit Tests
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 permissions:
   contents: read
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
+    container:
+      image: php:latest
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout repository
+        run: |
+          git clone https://github.com/${{ github.repository }} .
+          git checkout ${{ github.sha }}
 
-    - name: Validate composer.json and composer.lock
-      run: composer validate --strict
+      - name: Install system dependencies
+        run: |
+          apt-get update
+          apt-get install -y git unzip curl
 
-    - name: Cache Composer packages
-      id: composer-cache
-      uses: actions/cache@v3
-      with:
-        path: vendor
-        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-php-
+      - name: Install Composer (official installer)
+        run: |
+          curl -sS https://getcomposer.org/installer -o composer-setup.php
+          php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+          composer --version
 
-    - name: Install dependencies
-      run: composer install --prefer-dist --no-progress
+      - name: Install PHP dependencies
+        run: |
+          composer install --no-interaction --prefer-dist
 
-    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
-    # Docs: https://getcomposer.org/doc/articles/scripts.md
-
-    - name: Run test suite
-      run: composer run-script test
+      - name: Run PHPUnit via composer script
+        run: |
+          composer run-script test
