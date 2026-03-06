@@ -40,6 +40,9 @@
         ],
         "post-update-cmd": [
             "rm -f .phpunit.result.cache"
+        ],
+        "test": [
+            "phpunit"
         ]
     },
     "minimum-stability": "stable",
