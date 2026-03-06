@@ -15,10 +15,6 @@ use Throwable;
 class KeyGeneratorService
 {
     /**
-     * @var array<string, callable>
-     */
-    private static array $keyGeneratorCache = [];
-    /**
      * @var array<string, string>
      */
     private static array $cacheKeyPrefixCache = [];
@@ -29,33 +25,7 @@ class KeyGeneratorService
 
     public static function getKey(MethodCallObject $methodCallObject, bool $throw = true): string
     {
-        $cacheGeneratorCacheKey = $methodCallObject->getCacheGeneratorCacheKey();
-
-        if (!isset(self::$keyGeneratorCache[$cacheGeneratorCacheKey])) {
-            $reflectionClass = new ReflectionClass($methodCallObject->getClass());
-
-            if (!$reflectionClass->hasMethod($methodCallObject->getMethod())) {
-                if ($throw) {
-                    throw new InvalidArgumentException("Method {$methodCallObject->getMethod()} does not exist in class {$methodCallObject->getClass()}");
-                }
-                self::$keyGeneratorCache[$cacheGeneratorCacheKey] = [self::class, 'defaultKeyGenerator'];
-
-                // exit to allow invalidate by class to work when $throw is false
-                return self::defaultKeyGenerator($methodCallObject);
-            }
-
-            $methodReflection = $reflectionClass->getMethod($methodCallObject->getMethod());
-
-            $mlcCacheableMethodAttribute = MlcCacheableMethod::fromReflectionMethod($methodReflection);
-
-            if ($mlcCacheableMethodAttribute->hasKeyGenerator()) {
-                self::$keyGeneratorCache[$cacheGeneratorCacheKey] = $mlcCacheableMethodAttribute->getKeyGeneratorCallable();
-            } else {
-                self::$keyGeneratorCache[$cacheGeneratorCacheKey] = [self::class, 'defaultKeyGenerator'];
-            }
-        }
-
-        return call_user_func(self::$keyGeneratorCache[$cacheGeneratorCacheKey], $methodCallObject);
+        return self::defaultKeyGenerator($methodCallObject);
     }
 
     public static function getKeyPatternForMethod(MethodCallObject $methodCallObject): string
@@ -132,6 +102,8 @@ class KeyGeneratorService
         } catch (Throwable) {
             $dataVersionString = 'NA';
         }
+
+        $dataVersionString = str_replace(':', '_', $dataVersionString);
 
         self::$dataVersionCache[$cacheKey] = $dataVersionString;
 

@@ -64,7 +64,7 @@ Everything else is hands off.
 
 ## Basic relation between the Source and the Cached Service
 
-![Basic Principle of the CacheGenerator](documentation/images/svg/CacheGeneratorPrinciple.svg)
+![How Cached Services work](documentation/images/svg/CacheGeneratorPrinciple.svg)
 
 
 ## Usage
