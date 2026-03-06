@@ -13,11 +13,6 @@ use ReflectionMethod;
 
 class MlcCacheableMethod
 {
-    /**
-     * @var callable|null
-     */
-    private mixed $keyGeneratorCallable = null;
-
     public function __construct(
         private int $ttlSeconds,
         private ?string $dataVersion = null,
