@@ -149,18 +149,18 @@ class MultiLevelCacheDataCollectorTest extends TestCase
 
     public function testGetStatisticsObjectWithInvalidGroup(): void
     {
-        $this->expectException(InvalidArgumentException::class);
         $collector = new MultiLevelCacheDataCollector('dev', false);
 
         $ref = new ReflectionClass($collector);
         $method = $ref->getMethod('getStatisticsObject');
         $method->setAccessible(true);
         $stats = $method->invokeArgs($collector, ['nonexistent_group', 0]);
+
+        $this->assertNull($stats);
     }
 
     public function testGetStatisticsObjectWithInvalidLevel(): void
     {
-        $this->expectException(InvalidArgumentException::class);
         $collector = new MultiLevelCacheDataCollector('dev', false);
         $collector->addInstance(
             groupName: 'valid_group',
@@ -174,6 +174,8 @@ class MultiLevelCacheDataCollectorTest extends TestCase
         $method = $ref->getMethod('getStatisticsObject');
         $method->setAccessible(true);
         $stats = $method->invokeArgs($collector, ['valid_group', 7]);
+
+        $this->assertNull($stats);
     }
 
 }
