@@ -3,7 +3,7 @@ Index:
 - [MultiLevelCacheFactory](#multilevelcachefactory)
 - [InvalidatorService](#invalidatorservice)
 
------------------
+---
 
 
 
@@ -12,6 +12,7 @@ Index:
 The `MultiLevelCacheService` is the core of the Multi Level Cache. It is responsible for handling the caching logic and providing a simple interface for caching your data.
 
 The primary way of getting an instance of the Service is through the `MultiLevelCacheFactory` see [here](#multilevelcachefactory).
+
 
 ## Basic Usage
 
@@ -96,7 +97,6 @@ $cacheService = new MultiLevelCacheService(
 	writeL0OnSet: true,
 	cacheGroupName: 'my_awesome_cache_group',
 );
-
 ```
 
 ### The arguments
@@ -132,6 +132,23 @@ The `MultiLevelCacheFactory` is responsible for creating instances of the `Multi
 
 You can inject the Factory via DI into your service and then create a `MultiLevelCacheService` with the following default configurations:
 
+## createByType
+
+This method allows you to create a `MultiLevelCacheService` by one of the given presets. The Presets are defined in the `CacheTypeEnum` and are the following:
+
+- `DEFAULT`: This is the `createDefault2LevelCache` preset.
+- `IN_MEMORY`: This is the `createInMemoryOnlyCache` preset.
+- `REDIS`: This is the `createRedisOnlyCache` preset.
+
+```php
+$this->cache = $multiLevelCacheFactory->createByType(
+	type: CacheTypeEnum::DEFAULT,
+	inMemoryCacheMaxSize: 100,
+	redisKeyPrefix: 'mlc',
+	writeL0OnSet: true,
+	cacheGroupName: 'my_awesome_cache_group',
+);
+```
 
 ## createDefault2LevelCache
 
@@ -140,7 +157,6 @@ This is the default use case for the `MultiLevelCacheService`. It creates a cach
 This is also the cache used by the Cached Service Generator and is the recommended way of using the MLC for most use cases.
 
 ```php
-
 $cacheService = $factory->createDefault2LevelCache(
 	inMemoryCacheMaxSize: 100,
 	redisKeyPrefix: 'mlc',
@@ -154,7 +170,6 @@ $cacheService->get('my_cache_key', function() {
 
 	return 'my_expensive_data';
 });
-
 ```
 
 
@@ -163,20 +178,23 @@ $cacheService->get('my_cache_key', function() {
 This is usefull to deduplicate repeating deserialized objects from requests or other string sources or to reuse expensive data that can't be stored in a more persistent cache for any reason.
 
 ```php
-
 $cacheService = $factory->createInMemoryOnlyCache(
 	inMemoryCacheMaxSize: 100,
 	writeL0OnSet: true,
 	cacheGroupName: 'my_awesome_cache_group',
 );
+```
 
-$cacheService->get('my_cache_key', function() {
-	// This callback will only be executed if the cache key is not found in any level of the cache.
-	// You can put your expensive data fetching logic here.
+## createRedisOnlyCache
 
-	return 'my_expensive_data';
-});
+If your use case does not benefit from de-duplication of objects or does not have a high number of repeating requests, it might be beneficial to only use a redis cache. The profiler will be helpful to determine if this is the case for your use case. (Hit rates per level are what you want to look at here)
 
+```php
+$cacheService = $factory->createRedisOnlyCache(
+	redisKeyPrefix: 'mlc',
+	writeL0OnSet: true,
+	cacheGroupName: 'my_awesome_cache_group',
+);
 ```
 
 ## Arguments

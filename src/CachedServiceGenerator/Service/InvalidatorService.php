@@ -7,7 +7,6 @@ namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
 use Tbessenreither\MultiLevelCache\Factory\MultiLevelCacheFactory;
 use Tbessenreither\MultiLevelCache\Service\Implementations\DirectRedisCacheService;
-use Tbessenreither\MultiLevelCache\Service\MultiLevelCacheService;
 
 class InvalidatorService
 {

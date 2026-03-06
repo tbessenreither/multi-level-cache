@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute;
 
-use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\MakeCachedServiceService;
 use Attribute;
 use ReflectionClass;
+use Tbessenreither\MultiLevelCache\Enum\CacheTypeEnum;
 
 /**
  * To mark a service as cacheable.
@@ -16,29 +16,22 @@ use ReflectionClass;
 
 class MlcCacheableService
 {
-    private int $defaultTtlSeconds;
-
     public function __construct(
-        ?int $defaultTtlSeconds = null,
         private ?string $additionalInterface = null,
         private ?string $dataVersion = null,
+        private CacheTypeEnum $cacheType = CacheTypeEnum::DEFAULT,
+        private int $inMemoryCacheMaxSize = 100,
     ) {
-        $this->defaultTtlSeconds = $defaultTtlSeconds ?? MakeCachedServiceService::DEFAULT_TTL_SECONDS;
     }
 
-    public static function fromReflectionClass(ReflectionClass $class): ?self
+    public static function fromReflectionClass(ReflectionClass $class): self
     {
         $attributes = $class->getAttributes(self::class);
         if (empty($attributes)) {
-            return null;
+            return new self();
         }
 
         return $attributes[0]->newInstance();
-    }
-
-    public function getDefaultTtlSeconds(): int
-    {
-        return $this->defaultTtlSeconds;
     }
 
     public function getAdditionalInterface(): ?string
@@ -49,6 +42,16 @@ class MlcCacheableService
     public function getDataVersion(): ?string
     {
         return $this->dataVersion;
+    }
+
+    public function getCacheType(): CacheTypeEnum
+    {
+        return $this->cacheType;
+    }
+
+    public function getInMemoryCacheMaxSize(): int
+    {
+        return $this->inMemoryCacheMaxSize;
     }
 
 }

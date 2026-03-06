@@ -11,6 +11,7 @@ use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Stopwatch\Stopwatch;
 use Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector;
+use Tbessenreither\MultiLevelCache\Enum\CacheTypeEnum;
 use Tbessenreither\MultiLevelCache\Exception\CacheConnectionException;
 use Tbessenreither\MultiLevelCache\Service\Implementations\DirectRedisCacheService;
 use Tbessenreither\MultiLevelCache\Service\Implementations\InMemoryCacheService;
@@ -46,6 +47,20 @@ class MultiLevelCacheFactory
         }
     }
 
+    public function createByType(
+        CacheTypeEnum $type,
+        int $inMemoryCacheMaxSize = 100,
+        string $redisKeyPrefix = 'mlc',
+        bool $writeL0OnSet = false,
+        string $cacheGroupName = '',
+    ): MultiLevelCacheService {
+        return match ($type) {
+            CacheTypeEnum::IN_MEMORY => $this->createInMemoryOnlyCache($inMemoryCacheMaxSize, $writeL0OnSet, $cacheGroupName),
+            CacheTypeEnum::REDIS => $this->createRedisOnlyCache($redisKeyPrefix, $writeL0OnSet, $cacheGroupName),
+            CacheTypeEnum::DEFAULT => $this->createDefault2LevelCache($inMemoryCacheMaxSize, $redisKeyPrefix, $writeL0OnSet, $cacheGroupName),
+        };
+    }
+
     public function createDefault2LevelCache(
         int $inMemoryCacheMaxSize = 100,
         string $redisKeyPrefix = 'mlc',
@@ -73,6 +88,23 @@ class MultiLevelCacheFactory
         return new MultiLevelCacheService(
             caches: [
                 $this->getImplementationInMemory($inMemoryCacheMaxSize),
+            ],
+            writeL0OnSet: $writeL0OnSet,
+            stopwatch: $this->stopwatch,
+            cacheDataCollector: $this->cacheDataCollector,
+            cacheGroupName: $cacheGroupName,
+            cacheReadDisabled: $this->cacheReadDisabled,
+        );
+    }
+
+    public function createRedisOnlyCache(
+        string $redisKeyPrefix = 'mlc',
+        bool $writeL0OnSet = false,
+        string $cacheGroupName = '',
+    ): MultiLevelCacheService {
+        return new MultiLevelCacheService(
+            caches: [
+                $this->getImplementationRedis($this->redisClient, $redisKeyPrefix),
             ],
             writeL0OnSet: $writeL0OnSet,
             stopwatch: $this->stopwatch,

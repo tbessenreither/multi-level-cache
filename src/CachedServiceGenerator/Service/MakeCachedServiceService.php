@@ -4,21 +4,21 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service;
 
-use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableMethod;
-use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableService;
-use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachedService;
-use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Exception\MlcUpdateCachedServiceException;
 use ReflectionClass;
 use ReflectionIntersectionType;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionUnionType;
 use RuntimeException;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableMethod;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableService;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachedService;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Exception\MlcUpdateCachedServiceException;
 use Throwable;
 
 class MakeCachedServiceService
 {
-    public const DEFAULT_TTL_SECONDS = 3600;
+    public const int DEFAULT_TTL_SECONDS = 3600;
 
     public function __construct(
     ) {
@@ -40,7 +40,7 @@ class MakeCachedServiceService
             throw new RuntimeException("The class '{$class}' is already a cached service.");
         }
 
-        $mlcCacheableServiceInstance = $this->getMlcCacheableServiceFromReflection($reflection);
+        $mlcCacheableServiceAttribute = MlcCacheableService::fromReflectionClass($reflection);
 
         $namespace = $reflection->getNamespaceName();
         $shortName = $reflection->getShortName();
@@ -61,8 +61,6 @@ class MakeCachedServiceService
         $this->checkCachedClass($cachedClass);
 
         $methods = $this->getPublicMethods($reflection);
-
-        $defaultTtl = $this->getDefaultTtlFromOriginalClassReflection($reflection);
 
         $rootInfo = FileOperationService::findRootForClass($class);
 
@@ -95,9 +93,9 @@ class MakeCachedServiceService
         $interfaces = [
             $interfaceClassName,
         ];
-        if ($mlcCacheableServiceInstance !== null && $mlcCacheableServiceInstance->getAdditionalInterface() !== null) {
-            $useLines[] = "use {$mlcCacheableServiceInstance->getAdditionalInterface()};";
-            $interfaces[] = $this->cleanupFqcnBasedOnUseLines($useLines, '\\' . $mlcCacheableServiceInstance->getAdditionalInterface());
+        if ($mlcCacheableServiceAttribute->getAdditionalInterface() !== null) {
+            $useLines[] = "use {$mlcCacheableServiceAttribute->getAdditionalInterface()};";
+            $interfaces[] = $this->cleanupFqcnBasedOnUseLines($useLines, '\\' . $mlcCacheableServiceAttribute->getAdditionalInterface());
         }
 
         $interfaceCode = RenderTemplateService::render('Interface/InterfaceWrapper', [
@@ -126,7 +124,7 @@ class MakeCachedServiceService
             'ClassHyphenSeparated' => $classHyphenSeparated,
             'UseLines' => implode(PHP_EOL, $useLines),
             'InterfacesString' => implode(', ', $interfaces),
-            'DefaultTtlSeconds' => $defaultTtl,
+            'DefaultTtlSeconds' => self::DEFAULT_TTL_SECONDS,
             'DynamicMethods' => $dynamicMethods['methods'],
         ]);
 
@@ -376,28 +374,6 @@ class MakeCachedServiceService
             $methods[] = $method;
         }
         return $methods;
-    }
-
-    public function getDefaultTtlFromOriginalClassReflection(ReflectionClass $reflection): int
-    {
-        $mlcCacheableServiceInstance = $this->getMlcCacheableServiceFromReflection($reflection);
-        if ($mlcCacheableServiceInstance === null) {
-            return self::DEFAULT_TTL_SECONDS;
-        }
-
-        return $mlcCacheableServiceInstance->getDefaultTtlSeconds();
-    }
-
-    public function getMlcCacheableServiceFromReflection(ReflectionClass $reflection): ?MlcCacheableService
-    {
-        $attribute = $reflection->getAttributes(MlcCacheableService::class);
-        if (empty($attribute)) {
-            return null;
-        }
-        /**
-         * @var MlcCacheableService
-         */
-        return $attribute[0]->newInstance();
     }
 
     private function fixInlinedClassNames(array $useLines, string $typeString): string
