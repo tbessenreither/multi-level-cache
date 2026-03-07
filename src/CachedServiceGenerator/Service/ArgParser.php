@@ -12,8 +12,13 @@ class ArgParser
      */
     public static function parse(): array
     {
-        $result = [];
         global $argv;
+        return self::parseArgvArray($argv);
+    }
+
+    public static function parseArgvArray(array $argv): array
+    {
+        $result = [];
         foreach ($argv as $arg) {
             if (str_starts_with($arg, '--')) {
                 $argTrimmed = trim(substr($arg, 2));

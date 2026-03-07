@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Tbessenreither\MultiLevelCache\DependencyInjection\Compiler;
+namespace Tbessenreither\MultiLevelCache\Tests\DependencyInjection\Compiler;
 
 use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;

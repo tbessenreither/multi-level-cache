@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Tbessenreither\MultiLevelCache;
+namespace Tbessenreither\MultiLevelCache\Tests;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;

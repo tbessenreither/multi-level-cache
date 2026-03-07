@@ -83,14 +83,10 @@ class KeyGeneratorService
 
         try {
             $reflectionClass = new ReflectionClass($methodCallObject->getClass());
-            $mlcCacheableServiceAttribute = MlcCacheableService::fromReflectionClass($reflectionClass);
+            $mlcCacheableServiceAttribute = MlcCacheableService::fromReflectionClass(class: $reflectionClass);
 
             $methodReflection = $reflectionClass->getMethod($methodCallObject->getMethod());
-            $mlcCacheableMethodAttribute = MlcCacheableMethod::fromReflectionMethod($methodReflection);
-
-            if ($mlcCacheableMethodAttribute === null) {
-                throw new RuntimeException("Method {$methodCallObject->getMethod()} in class {$methodCallObject->getClass()} is not marked as MlcCacheableMethod");
-            }
+            $mlcCacheableMethodAttribute = MlcCacheableMethod::fromReflectionMethod(method: $methodReflection, throw: true);
 
             if ($mlcCacheableMethodAttribute->getDataVersion() !== null) {
                 $dataVersionString = $mlcCacheableMethodAttribute->getDataVersion();

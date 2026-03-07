@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute;
+namespace Tbessenreither\MultiLevelCache\Tests\CachedServiceGenerator\Attribute;
 
 use Exception;
 use PHPUnit\Framework\Attributes\CoversClass;

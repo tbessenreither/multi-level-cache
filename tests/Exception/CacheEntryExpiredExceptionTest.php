@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Tbessenreither\MultiLevelCache\Exception;
+namespace Tbessenreither\MultiLevelCache\Tests\Exception;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;

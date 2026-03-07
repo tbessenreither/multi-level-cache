@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Tbessenreither\MultiLevelCache\Service\Implementations;
+namespace Tbessenreither\MultiLevelCache\Tests\Service\Implementations;
 
 use Exception;
 use InvalidArgumentException;
