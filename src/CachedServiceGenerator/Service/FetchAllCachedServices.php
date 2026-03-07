@@ -60,7 +60,11 @@ class FetchAllCachedServices
 
             // extract the class name
             $fqcn = '';
-            if (preg_match('/class\s+([A-Za-z_\x80-\xff][A-Za-z0-9_\x80-\xff]*)/m', $contents, $classMatch)) {
+
+            $fileNameWithoutExtension = $file->getBasename('.php');
+            if (str_contains($contents, 'class '.$fileNameWithoutExtension)) {
+                $fqcn = $namespace !== '' ? $namespace . '\\' . $fileNameWithoutExtension : $fileNameWithoutExtension;
+            } elseif (preg_match('/class\s+([A-Za-z_\x80-\xff][A-Za-z0-9_\x80-\xff]*)/m', $contents, $classMatch)) {
                 $className = $classMatch[1];
                 $fqcn = $namespace !== '' ? $namespace . '\\' . $className : $className;
             }
