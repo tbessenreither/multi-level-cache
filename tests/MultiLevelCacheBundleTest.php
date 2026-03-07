@@ -2,57 +2,64 @@
 
 declare(strict_types=1);
 
-namespace Tbessenreither\MultiLevelCache\Tests;
+namespace Tbessenreither\MultiLevelCache;
 
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\InvalidatorService;
+use Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector;
 use Tbessenreither\MultiLevelCache\DependencyInjection\Compiler\CompilerPass;
-use Tbessenreither\MultiLevelCache\MultiLevelCacheBundle;
+use Tbessenreither\MultiLevelCache\Factory\MultiLevelCacheFactory;
 
-#[CoversClass(MultiLevelCacheBundle::class)]
-
-class MultiLevelCacheBundleTest extends TestCase
+class MultiLevelCacheBundle extends Bundle
 {
-    private ContainerBuilder&MockObject $containerBuilder;
-
-    public function setUp(): void
+    public function build(ContainerBuilder $container): void
     {
-        parent::setUp();
-        $this->containerBuilder = $this->createMock(ContainerBuilder::class);
+        parent::build($container);
 
+        if ($container->isCompiled()) {
+            return;
+        }
+
+        $container->addCompilerPass(new CompilerPass());
+
+        $dataCollectorDefinition = $this->processClass($container, MultiLevelCacheDataCollector::class);
+        $dataCollectorDefinition->addTag('data_collector', [
+            'id' => MultiLevelCacheDataCollector::NAME,
+            'template' => MultiLevelCacheDataCollector::TEMPLATE,
+            'priority' => 334,
+        ]);
+        $dataCollectorDefinition->setArgument('$appEnv', "%env(APP_ENV)%");
+        $dataCollectorDefinition->setArgument('$enhancedDataCollection', '%env(bool:defined:MLC_COLLECT_ENHANCED_DATA)%');
+        $container->setAlias(
+            MultiLevelCacheDataCollector::NAME,
+            MultiLevelCacheDataCollector::class,
+        )->setPublic(true);
+
+
+        $this->processClass($container, MultiLevelCacheFactory::class);
+        $this->processClass($container, InvalidatorService::class);
     }
-    public function testContainerWhenNotCompiled(): void
+
+    private function processClass(ContainerBuilder $container, string $classInstance): Definition
     {
-        $compilerPass = new MultiLevelCacheBundle();
+        if (!$container->hasDefinition($classInstance)) {
+            $definition = new Definition($classInstance);
+            $definition->setAutowired(true);
+            $definition->setAutoconfigured(true);
+            $definition->setPublic(true);
+            $container->setDefinition($classInstance, $definition);
 
-        $this->containerBuilder
-            ->expects($this->once())
-            ->method('isCompiled')
-            ->willReturn(false);
+            return $definition;
+        } else {
+            $definition = $container->getDefinition($classInstance);
+            $definition->setAutowired(true);
+            $definition->setAutoconfigured(true);
+            $definition->setPublic(true);
+            return $definition;
 
-        $this->containerBuilder
-            ->expects($this->once())
-            ->method('addCompilerPass')
-            ->with(static::isInstanceOf(CompilerPass::class));
-
-        $compilerPass->build($this->containerBuilder);
-    }
-    public function testContainerWhenCompiled(): void
-    {
-        $compilerPass = new MultiLevelCacheBundle();
-
-        $this->containerBuilder
-            ->expects($this->once())
-            ->method('isCompiled')
-            ->willReturn(true);
-
-        $this->containerBuilder
-            ->expects($this->never())
-            ->method('addCompilerPass');
-
-        $compilerPass->build($this->containerBuilder);
+        }
     }
 
 }
