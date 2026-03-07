@@ -4,19 +4,33 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\DependencyInjection\Compiler;
 
-use Redis;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\InvalidatorService;
+use Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector;
 use Tbessenreither\MultiLevelCache\Factory\MultiLevelCacheFactory;
-use Tbessenreither\MultiLevelCache\Service\Implementations\DirectRedisCacheService;
 
 class CompilerPass implements CompilerPassInterface
 {
     private const TEMPLATE_DIR = 'Templates';
 
     public function process(ContainerBuilder $container): void
+    {
+        $this->processTwig($container);
+
+        $this->processClass($container, MultiLevelCacheFactory::class);
+        $this->processClass($container, InvalidatorService::class);
+        $dataCollectorDefinition = $this->processClass($container, MultiLevelCacheDataCollector::class);
+        $dataCollectorDefinition->setArgument('$appEnv', "%env(APP_ENV)%");
+        $dataCollectorDefinition->setArgument('$enhancedDataCollection', '%env(bool:defined:MLC_COLLECT_ENHANCED_DATA)%');
+        $container->setAlias(
+            MultiLevelCacheDataCollector::class,
+            MultiLevelCacheDataCollector::NAME
+        )->setPublic(true);
+    }
+
+    private function processTwig(ContainerBuilder $container): void
     {
         if (!$container->has('twig')) {
             return;
@@ -30,9 +44,6 @@ class CompilerPass implements CompilerPassInterface
             $rootDir . '/' . self::TEMPLATE_DIR,
             'TbessenreitherMultiLevelCache',
         ]);
-
-        $this->processClass($container, MultiLevelCacheFactory::class);
-        $this->processClass($container, InvalidatorService::class);
     }
 
     private function getRootDir(): string
@@ -52,6 +63,8 @@ class CompilerPass implements CompilerPassInterface
             return $definition;
         } else {
             $definition = $container->getDefinition($classInstance);
+            $definition->setAutowired(true);
+            $definition->setAutoconfigured(true);
             $definition->setPublic(true);
             return $definition;
 
