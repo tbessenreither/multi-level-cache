@@ -2,64 +2,129 @@
 
 declare(strict_types=1);
 
-namespace Tbessenreither\MultiLevelCache;
+namespace Tbessenreither\MultiLevelCache\Tests;
 
-use Symfony\Component\HttpKernel\Bundle\Bundle;
+use Generator;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\InvalidatorService;
 use Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector;
 use Tbessenreither\MultiLevelCache\DependencyInjection\Compiler\CompilerPass;
 use Tbessenreither\MultiLevelCache\Factory\MultiLevelCacheFactory;
+use Tbessenreither\MultiLevelCache\MultiLevelCacheBundle;
 
-class MultiLevelCacheBundle extends Bundle
+#[CoversClass(MultiLevelCacheBundle::class)]
+
+class MultiLevelCacheBundleTest extends TestCase
 {
-    public function build(ContainerBuilder $container): void
+    private ContainerBuilder&MockObject $containerBuilder;
+
+    public function setUp(): void
     {
-        parent::build($container);
+        parent::setUp();
+        $this->containerBuilder = $this->createMock(ContainerBuilder::class);
 
-        if ($container->isCompiled()) {
-            return;
-        }
+    }
+    public function testContainerWhenNotCompiled(): void
+    {
+        $compilerPass = new MultiLevelCacheBundle();
 
-        $container->addCompilerPass(new CompilerPass());
+        $this->containerBuilder
+            ->expects($this->once())
+            ->method('isCompiled')
+            ->willReturn(false);
 
-        $dataCollectorDefinition = $this->processClass($container, MultiLevelCacheDataCollector::class);
-        $dataCollectorDefinition->addTag('data_collector', [
-            'id' => MultiLevelCacheDataCollector::NAME,
-            'template' => MultiLevelCacheDataCollector::TEMPLATE,
-            'priority' => 334,
-        ]);
-        $dataCollectorDefinition->setArgument('$appEnv', "%env(APP_ENV)%");
-        $dataCollectorDefinition->setArgument('$enhancedDataCollection', '%env(bool:defined:MLC_COLLECT_ENHANCED_DATA)%');
-        $container->setAlias(
-            MultiLevelCacheDataCollector::NAME,
-            MultiLevelCacheDataCollector::class,
-        )->setPublic(true);
+        $this->containerBuilder
+            ->expects($this->once())
+            ->method('addCompilerPass')
+            ->with(static::isInstanceOf(CompilerPass::class));
 
+        $compilerPass->build($this->containerBuilder);
+    }
+    public function testContainerWhenCompiled(): void
+    {
+        $compilerPass = new MultiLevelCacheBundle();
 
-        $this->processClass($container, MultiLevelCacheFactory::class);
-        $this->processClass($container, InvalidatorService::class);
+        $this->containerBuilder
+            ->expects($this->once())
+            ->method('isCompiled')
+            ->willReturn(true);
+
+        $this->containerBuilder
+            ->expects($this->never())
+            ->method('addCompilerPass');
+
+        $compilerPass->build($this->containerBuilder);
     }
 
-    private function processClass(ContainerBuilder $container, string $classInstance): Definition
+    #[DataProvider('classesAreRegisteredDataProvider')]
+    public function testClassesAreRegistered(bool $hasDefinition): void
     {
-        if (!$container->hasDefinition($classInstance)) {
-            $definition = new Definition($classInstance);
-            $definition->setAutowired(true);
-            $definition->setAutoconfigured(true);
-            $definition->setPublic(true);
-            $container->setDefinition($classInstance, $definition);
+        $expectedClasses = self::expectedClassesProvider();
 
-            return $definition;
+        $compilerPass = new MultiLevelCacheBundle();
+
+        $this->containerBuilder
+            ->expects($this->once())
+            ->method('isCompiled')
+            ->willReturn(false);
+
+        $this->containerBuilder
+            ->expects($this->atLeast(count($expectedClasses)))
+            ->method('hasDefinition')
+            ->willReturn($hasDefinition);
+
+        $submittedClasses = [];
+
+        if (!$hasDefinition) {
+            $this->containerBuilder
+                ->expects($this->atLeast(count($expectedClasses)))
+                ->method('setDefinition')
+                ->willReturnCallback(function (string $id, Definition $definition) use (&$submittedClasses) {
+                    $submittedClasses[] = $id;
+                    return $definition;
+                });
         } else {
-            $definition = $container->getDefinition($classInstance);
-            $definition->setAutowired(true);
-            $definition->setAutoconfigured(true);
-            $definition->setPublic(true);
-            return $definition;
+            $definitionMock = $this->createMock(Definition::class);
+            $definitionMock->expects($this->atLeast(count($expectedClasses)))
+            ->method('setAutowired');
+            $definitionMock->expects($this->atLeast(count($expectedClasses)))
+            ->method('setAutoconfigured');
+            $definitionMock->expects($this->atLeast(count($expectedClasses)))
+            ->method('setPublic');
 
+            $this->containerBuilder
+                ->expects($this->atLeast(count($expectedClasses)))
+                ->method('getDefinition')
+                ->willReturnCallback(function (string $id) use ($definitionMock, &$submittedClasses) {
+                    $submittedClasses[] = $id;
+                    return $definitionMock;
+                });
         }
+
+        $compilerPass->build($this->containerBuilder);
+        foreach ($expectedClasses as $expectedClass) {
+            $this->assertContains($expectedClass, $submittedClasses, "Expected class $expectedClass was not processed by Compiler Pass.");
+        }
+    }
+
+    public static function classesAreRegisteredDataProvider(): Generator
+    {
+        yield 'Classes are not registered' => [false];
+        yield 'Classes are already registered' => [true];
+    }
+
+    public static function expectedClassesProvider(): array
+    {
+        return [
+            MultiLevelCacheFactory::class,
+            InvalidatorService::class,
+            MultiLevelCacheDataCollector::class,
+        ];
     }
 
 }
