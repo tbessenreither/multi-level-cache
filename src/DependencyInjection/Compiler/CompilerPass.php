@@ -25,8 +25,8 @@ class CompilerPass implements CompilerPassInterface
         $dataCollectorDefinition->setArgument('$appEnv', "%env(APP_ENV)%");
         $dataCollectorDefinition->setArgument('$enhancedDataCollection', '%env(bool:defined:MLC_COLLECT_ENHANCED_DATA)%');
         $container->setAlias(
+            MultiLevelCacheDataCollector::NAME,
             MultiLevelCacheDataCollector::class,
-            MultiLevelCacheDataCollector::NAME
         )->setPublic(true);
     }
 
