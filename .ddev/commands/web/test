@@ -5,4 +5,5 @@
 
 echo "run coverage tests"
 
-php vendor/bin/phpunit --coverage-clover public/coverage/coverage.xml
+export XDEBUG_MODE=coverage
+php vendor/bin/phpunit --coverage-clover coverage/coverage.xml "${@}"

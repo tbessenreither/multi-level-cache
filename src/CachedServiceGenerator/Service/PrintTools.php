@@ -18,10 +18,10 @@ class PrintTools
                 $value = array_shift($row);
                 if (is_bool($value)) {
                     $value = $value ? 'true' : 'false';
+                } elseif (is_int($value) || is_float($value)) {
+                    $value = (string)$value;
                 } elseif (!is_string($value)) {
-                    ob_start();
-                    print_r($value, true);
-                    $value = ob_get_clean();
+                    $value = json_encode($value);
                 }
                 $value = str_replace(PHP_EOL, ' ', $value);
 

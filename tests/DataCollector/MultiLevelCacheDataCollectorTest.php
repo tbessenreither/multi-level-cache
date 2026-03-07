@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\Tests\DataCollector;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -15,6 +14,8 @@ use Tbessenreither\MultiLevelCache\Dto\DataCollectorCacheInfoDto;
 use Tbessenreither\MultiLevelCache\Dto\DataCollectorIssueDto;
 use Tbessenreither\MultiLevelCache\Interface\DataCollectorIssueEnumInterface;
 use stdClass;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 #[CoversClass(MultiLevelCacheDataCollector::class)]
 #[UsesClass(CacheStatistics::class)]
@@ -24,6 +25,55 @@ use stdClass;
 
 class MultiLevelCacheDataCollectorTest extends TestCase
 {
+    public function testInitialState(): void
+    {
+        $collector = new MultiLevelCacheDataCollector('dev', false);
+
+        $this->assertEquals(MultiLevelCacheDataCollector::NAME, $collector->getName());
+        $this->assertFalse($collector->isActive());
+        $this->assertEmpty($collector->getGroupedInstances());
+        $this->assertEmpty($collector->getAdapters());
+        $this->assertEmpty($collector->getIssues());
+
+        // check that collect is not throwing errors when called
+        $collector->collect(
+            new Request(),
+            new Response(),
+        );
+    }
+
+    public function testWhenNotCollecting(): void
+    {
+        $collector = new MultiLevelCacheDataCollector('prod', false);
+
+        // simulate not collecting by directly setting data
+        $ref = new ReflectionClass($collector);
+        $property = $ref->getProperty('data');
+        $property->setAccessible(true);
+        $property->setValue($collector, ['grouped_instances' => []]);
+
+        // add instance should not do anything
+        $stats = new CacheStatistics();
+        $collector->addInstance(
+            groupName: 'group1',
+            name: 'adapterA',
+            cacheLevel: 0,
+            class: stdClass::class,
+            statistics: $stats,
+        );
+
+        $this->assertEmpty($collector->getGroupedInstances());
+
+        // register hit/miss/decay should not do anything
+        $collector->registerCacheHit('group1', 0, 'key1');
+        $collector->registerCacheMiss('group1', 0, 'key1');
+        $collector->registerBetaDecay('group1', 0, 'key1');
+
+        $this->assertEquals(0, $stats->getHits());
+        $this->assertEquals(0, $stats->getMisses());
+        $this->assertEquals(0, $stats->getBetaDecays());
+    }
+
     public function testAddInstanceAndRegisterMethods(): void
     {
         $collector = new MultiLevelCacheDataCollector('dev', true);

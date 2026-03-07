@@ -5,6 +5,7 @@
 .phpunit.result.cache
 .phpunit.cache/
 /phpunit.xml
+coverage/
 
 # DDEV
 /.ddev/.gitignore
