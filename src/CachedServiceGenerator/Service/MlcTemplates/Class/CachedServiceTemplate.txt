@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace /*{ServiceNamespace}*/;
 
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableMethod;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableService;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachedService;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\KeyGeneratorService;

@@ -1,0 +1,17 @@
+This is /*{var1}*/ a test.
+
+
+/*
+ * A var /*{var2}*/ within a comment
+ */
+
+__/*{string}*/__
+
+__/*{int}*/__
+
+__/*{float}*/__
+
+__/*{bool-true}*/__
+__/*{bool-false}*/__
+
+__/*{null}*/__

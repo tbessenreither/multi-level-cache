@@ -79,18 +79,22 @@ class DirectRedisCacheService implements MultiLevelCacheImplementationInterface,
         return true;
     }
 
-    public function deleteByPattern(string $pattern): void
+    public function deleteByPattern(string $pattern): int
     {
         $redisClient = $this->redisClient;
         $deletePattern = $this->getPrefixedRedisCacheKey($pattern);
 
         $iterator = null;
+        $deletedItemCount = 0;
         do {
             $keys = $redisClient->scan($iterator, $deletePattern);
             foreach ($keys as $key) {
                 $redisClient->del($key);
+                $deletedItemCount++;
             }
         } while ($iterator != 0);
+
+        return $deletedItemCount;
     }
 
     public function getConfiguration(): array

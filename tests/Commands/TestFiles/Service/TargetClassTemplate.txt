@@ -1,0 +1,16 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tbessenreither\MultiLevelCache\Tests\Commands\TestFiles\Service;
+
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableMethod;
+
+class TargetClass
+{
+    #[MlcCacheableMethod(ttlSeconds: 3600)]
+    public function exampleMethod(): void
+    {
+        return;
+    }
+}

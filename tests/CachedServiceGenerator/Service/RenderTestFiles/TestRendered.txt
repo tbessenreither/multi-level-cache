@@ -1,0 +1,17 @@
+This is var1-content a test.
+
+
+/*
+ * A var var2-content within a comment
+ */
+
+__string-value__
+
+__15__
+
+__1.5__
+
+__true__
+__false__
+
+____
