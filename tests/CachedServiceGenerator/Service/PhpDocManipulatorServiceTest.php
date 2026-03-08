@@ -33,4 +33,10 @@ class PhpDocManipulatorServiceTest extends TestCase
         $expected = "    /**\n     * Existing description.\n     * Additional description.\n     * @param string \$param\n     */";
         $this->assertEquals($expected, $result);
     }
+
+    public function testEmptyIndent(): void
+    {
+        $result = PhpDocManipulatorService::indent(false, 1);
+        $this->assertEquals('', $result);
+    }
 }

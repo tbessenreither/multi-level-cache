@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service;
 
+use RuntimeException;
+
 class RenderTemplateService
 {
     public const string TEMPLATE_DIRECTORY = 'MlcTemplates';
@@ -13,15 +15,18 @@ class RenderTemplateService
      * @param array<string, string|int> $placeholders
      * @return string
      */
-    public static function render(string $templateName, array $placeholders): string
+    public static function render(string $templateName, array $placeholders, ?string $templateDirectory = null): string
     {
-        $template = self::getTemplate($templateName);
+        $template = self::getTemplate($templateName, $templateDirectory);
         foreach ($placeholders as $key => $value) {
-            if ($value === null || $value === false) {
-                $value = '';
-            }
             if (!is_string($value)) {
-                $value = (string)$value;
+                if (is_bool($value)) {
+                    $value = $value ? 'true' : 'false';
+                } elseif (is_null($value)) {
+                    $value = '';
+                } else {
+                    $value = (string)$value;
+                }
             }
             $template = str_replace("/*{{$key}}*/", $value, $template);
         }
@@ -31,9 +36,17 @@ class RenderTemplateService
     /**
      * Read the cached service template from file.
      */
-    private static function getTemplate(string $name): string
+    private static function getTemplate(string $name, ?string $templateDirectory = null): string
     {
-        $templatePath = __DIR__ . "/".self::TEMPLATE_DIRECTORY."/{$name}Template.txt";
+        if ($templateDirectory === null) {
+            $templateDirectory = __DIR__.'/'.self::TEMPLATE_DIRECTORY;
+        } else {
+            $templateDirectory = rtrim($templateDirectory, '/');
+        }
+        $templatePath = $templateDirectory . "/{$name}Template.txt";
+        if (!file_exists($templatePath)) {
+            throw new RuntimeException("Template file not found: {$templatePath}");
+        }
         return file_get_contents($templatePath);
     }
 }

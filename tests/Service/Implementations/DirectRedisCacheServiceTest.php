@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Redis;
+use RedisCluster;
 
 #[CoversClass(DirectRedisCacheService::class)]
 #[CoversClass(CacheObjectWrapperDto::class)]
@@ -190,6 +191,27 @@ class DirectRedisCacheServiceTest extends TestCase
         $this->assertEquals(6379, $config['redisPort']);
     }
 
+    public function testGetConfigurationCluster(): void
+    {
+        $redisClient = $this->createStub(RedisCluster::class);
+
+        $cache = new DirectRedisCacheService(
+            redisClient: $redisClient,
+            keyPrefix: 'test_prefix',
+        );
+
+        $config = $cache->getConfiguration();
+
+        $this->assertIsArray($config);
+        $this->assertArrayHasKey('prefix', $config);
+        $this->assertArrayHasKey('cacheAdapter', $config);
+        $this->assertArrayHasKey('redisHost', $config);
+        $this->assertArrayHasKey('redisPort', $config);
+        $this->assertArrayHasKey('serialization', $config);
+        $this->assertEquals('test_prefix', $config['prefix']);
+        $this->assertEquals('php_serialize', $config['serialization']);
+    }
+
     public function testSetUsesUnprefixedKeyWhenKeyPrefixIsEmpty(): void
     {
         $key = 'test_key';
@@ -208,6 +230,76 @@ class DirectRedisCacheServiceTest extends TestCase
         );
 
         $cache->set($key, $this->testObj);
+    }
+
+    public function testClearWithEmptyKeyPrefix(): void
+    {
+        $this->redisClient
+            ->expects($this->never())
+            ->method('scan');
+
+        $cache = new DirectRedisCacheService(
+            redisClient: $this->redisClient,
+            keyPrefix: null, // Null key prefix
+        );
+
+        $clearResult = $cache->clear();
+        $this->assertFalse($clearResult, 'Clear should return false when key prefix is empty');
+    }
+
+    public function testClearWithKeyPrefix(): void
+    {
+        $this->redisClient
+            ->expects($this->atLeastOnce())
+            ->method('scan')
+            ->willReturnOnConsecutiveCalls(
+                ['test_prefix:key1', 'test_prefix:key2'], // First scan returns keys
+                [] // Second scan returns no keys, ending the loop
+            );
+        $this->redisClient
+            ->expects($this->exactly(2))
+            ->method('del');
+
+        $cache = new DirectRedisCacheService(
+            redisClient: $this->redisClient,
+            keyPrefix: 'test_prefix',
+        );
+
+        $clearResult = $cache->clear();
+        $this->assertTrue($clearResult, 'Clear should return true when key prefix is set');
+    }
+
+    public function testDeleteByPattern(): void
+    {
+        $this->redisClient
+            ->expects($this->atLeastOnce())
+            ->method('scan')
+            ->willReturnOnConsecutiveCalls(
+                ['test_prefix:key1', 'test_prefix:key2'], // First scan returns keys
+                [] // Second scan returns no keys, ending the loop
+            );
+        $this->redisClient
+            ->expects($this->exactly(2))
+            ->method('del');
+
+        $cache = new DirectRedisCacheService(
+            redisClient: $this->redisClient,
+            keyPrefix: 'test_prefix',
+        );
+
+        $clearResult = $cache->deleteByPattern('some_pattern:*');
+        $this->assertIsInt($clearResult);
+    }
+
+    public function testGetCachedKeys(): void
+    {
+        $cache = new DirectRedisCacheService(
+            redisClient: $this->redisClient,
+            keyPrefix: 'test_prefix',
+        );
+
+        $clearResult = $cache->getCachedKeys();
+        $this->assertTrue(is_null($clearResult) || is_array($clearResult));
     }
 
     private function setupRedisMockService(string $method, mixed $value): void

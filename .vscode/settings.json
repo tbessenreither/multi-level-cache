@@ -1,0 +1,9 @@
+{
+	"php.version": "8.4",
+	"intelephense.environment.phpVersion": "8.4",
+	"files.exclude": {
+		"vendor": true,
+		"coverage": true,
+		".phpunit.result.cache": true
+	}
+}
