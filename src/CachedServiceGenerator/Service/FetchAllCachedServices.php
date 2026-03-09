@@ -11,9 +11,11 @@ use RecursiveIteratorIterator;
 use ReflectionClass;
 use RuntimeException;
 use SplFileInfo;
+use Throwable;
 
 class FetchAllCachedServices
 {
+    private const int MAX_DIR_ITERATIONS = 20;
     /**
      * @return Generator<array{serviceName: string, reflection: ReflectionClass, cachedServiceAttr: MlcCachedService}>
      */
@@ -62,7 +64,7 @@ class FetchAllCachedServices
             $fqcn = '';
 
             $fileNameWithoutExtension = $file->getBasename('.php');
-            if (str_contains($contents, 'class '.$fileNameWithoutExtension)) {
+            if (str_contains($contents, 'class ' . $fileNameWithoutExtension)) {
                 $fqcn = $namespace !== '' ? $namespace . '\\' . $fileNameWithoutExtension : $fileNameWithoutExtension;
             } elseif (preg_match('/class\s+([A-Za-z_\x80-\xff][A-Za-z0-9_\x80-\xff]*)/m', $contents, $classMatch)) {
                 $className = $classMatch[1];
@@ -90,23 +92,90 @@ class FetchAllCachedServices
             ];
         }
     }
+
     private static function getSrcDir(): string
     {
+        $srcDir = self::getSrcByComposerJson();
+        if ($srcDir !== false) {
+            return $srcDir;
+        }
+
+        $srcDir = self::getSrcDirByVendor();
+        if ($srcDir !== false) {
+            return $srcDir;
+        }
+
+        throw new RuntimeException("Could not determine source directory. Please provide it explicitly.");
+    }
+
+    private static function getSrcDirByVendor(): false|string
+    {
         $currentDir = dirname(__DIR__);
+        $itterations = 0;
 
         // Traverse up until we find the "vendor" directory either as the current directory or in the parent directory as a sibling (When ran in Unit Tests).
-        while (basename($currentDir) !== 'vendor' && !file_exists($currentDir.'/../vendor') && mb_strlen($currentDir) > 1) {
+        while (basename($currentDir) !== 'vendor' && !file_exists($currentDir . '/../vendor') && mb_strlen($currentDir) > 1) {
+            $itterations++;
+            if ($itterations > self::MAX_DIR_ITERATIONS) {
+                throw new RuntimeException("Could not find 'vendor' directory after " . self::MAX_DIR_ITERATIONS . " iterations. Aborting.");
+            }
+
             $currentDir = dirname($currentDir);
         }
 
         // Now go up one more level to get to the root of the project
         $currentDir = dirname($currentDir);
 
-        $sourceDir = $currentDir.'/src';
+        $sourceDir = $currentDir . '/src';
 
         if (!is_dir($sourceDir)) {
-            throw new RuntimeException("Source directory '$sourceDir' not found.");
+            return false;
         }
         return $sourceDir;
+    }
+
+    private static function getSrcByComposerJson(): false|string
+    {
+        try {
+            $currentDir = dirname(__DIR__);
+            $itterations = 0;
+            do {
+                $itterations++;
+                if ($itterations > self::MAX_DIR_ITERATIONS) {
+                    throw new RuntimeException("Could not find composer.json after " . self::MAX_DIR_ITERATIONS . " iterations. Aborting.");
+                }
+
+                $nextPath = dirname($currentDir);
+                if ($nextPath === $currentDir) {
+                    throw new RuntimeException("Reached root directory without finding composer.json. Aborting.");
+                }
+
+                $composerJsonPath = $currentDir . '/composer.json';
+                if (is_file($composerJsonPath)) {
+                    $composerJson = json_decode(file_get_contents($composerJsonPath), true);
+
+                    if (
+                        (isset($composerJson['name']) && str_contains($composerJson['name'], '/multi-level-cache'))
+                        || (!isset($composerJson['autoload']) || !isset($composerJson['autoload']['psr-4']))
+                    ) {
+                        $currentDir = $nextPath;
+                        continue;
+                    }
+
+                    $psr4 = $composerJson['autoload']['psr-4'];
+                    $firstPsr4Path = current($psr4);
+                    $srcPath = realpath($currentDir . '/' . $firstPsr4Path);
+                    if ($srcPath !== false && is_dir($srcPath)) {
+
+                        return $srcPath;
+                    }
+                }
+
+                $currentDir = $nextPath;
+            } while (true);
+
+        } catch (Throwable) {
+            return false;
+        }
     }
 }

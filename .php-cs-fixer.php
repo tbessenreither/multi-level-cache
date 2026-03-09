@@ -11,6 +11,7 @@ return (new PhpCsFixer\Config())
         '@PSR12' => true,
         'no_unused_imports' => true,
         'modifier_keywords' =>  ['elements' => ['const', 'method']],
+        'concat_space' => ['spacing' => 'one'],
     ])
     ->setFinder($finder)
 ;
