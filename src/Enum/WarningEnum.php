@@ -10,6 +10,7 @@ enum WarningEnum: string implements DataCollectorIssueEnumInterface
 {
     case WARNING_STORED_STRING_VALUE = 'You stored a string value in an object cache. This is inefficient and may lead to issues. Consider caching the deserialized object instead.';
     case WARNING_CACHE_READ_DISABLED = 'Cache read operations are currently disabled via the MLC_DISABLE_READ Environment Variable. This will impact performance.';
+    case WARNING_EXPERIMENTAL_FEATURE_BULK = 'You are using an experimental feature. Please be aware that Bulk Caching is still in early stages of development.';
 
     public function getName(): string
     {

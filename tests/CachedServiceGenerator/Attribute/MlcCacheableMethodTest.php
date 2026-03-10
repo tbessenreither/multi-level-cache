@@ -6,12 +6,15 @@ namespace Tbessenreither\MultiLevelCache\Tests\CachedServiceGenerator\Attribute;
 
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableMethod;
+use Tbessenreither\MultiLevelCache\Dto\BulkConfig;
+use Tbessenreither\MultiLevelCache\Enum\BulkListTypeEnum;
 
 #[CoversClass(MlcCacheableMethod::class)]
-
+#[UsesClass(BulkConfig::class)]
 class MlcCacheableMethodTest extends TestCase
 {
     public function testSetupAndGetter(): void
@@ -36,6 +39,12 @@ class MlcCacheableMethodTest extends TestCase
 
         $cacheableMethodWithTtlOne = new MlcCacheableMethod(1);
         $this->assertSame(1, $cacheableMethodWithTtlOne->getTtlSeconds());
+
+        $bulkConfig = new BulkConfig('id', BulkListTypeEnum::ARRAY_ASSOC);
+        $cacheableMEthodWithBulkConfig = new MlcCacheableMethod(3600, null, $bulkConfig);
+        $this->assertSame(3600, $cacheableMEthodWithBulkConfig->getTtlSeconds());
+        $this->assertInstanceOf(BulkConfig::class, $cacheableMEthodWithBulkConfig->getBulkConfig());
+        $this->assertSame($bulkConfig, $cacheableMEthodWithBulkConfig->getBulkConfig());
     }
 
     public function testInvalidTtlNegative(): void

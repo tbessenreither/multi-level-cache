@@ -4,12 +4,20 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\Tests\Service;
 
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableMethod;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableService;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\KeyGeneratorService;
 use Tbessenreither\MultiLevelCache\DataCollector\CacheStatistics;
 use Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector;
+use Tbessenreither\MultiLevelCache\Dto\BulkConfig;
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
+use Tbessenreither\MultiLevelCache\Enum\BulkListTypeEnum;
 use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
+use Tbessenreither\MultiLevelCache\Service\BulkMapperService;
 use Tbessenreither\MultiLevelCache\Service\Implementations\InMemoryCacheService;
 use Tbessenreither\MultiLevelCache\Service\MultiLevelCacheService;
+use Tbessenreither\MultiLevelCache\Tests\CachedServiceGenerator\Service\TestSrc\TestServiceA;
 use Tbessenreither\MultiLevelCache\Tests\Service\Implementations\NoopImplementation;
 use DateTime;
 use Generator;
@@ -28,8 +36,12 @@ use TypeError;
 #[CoversClass(CacheObjectWrapperDto::class)]
 #[CoversClass(CacheStatistics::class)]
 #[UsesClass(InMemoryCacheService::class)]
-
-
+#[UsesClass(MlcCacheableMethod::class)]
+#[UsesClass(MlcCacheableService::class)]
+#[UsesClass(MethodCallObject::class)]
+#[UsesClass(KeyGeneratorService::class)]
+#[UsesClass(BulkConfig::class)]
+#[UsesClass(BulkMapperService::class)]
 class MultiLevelCacheServiceTest extends TestCase
 {
     private CacheObjectWrapperDto $testObj;
@@ -335,6 +347,76 @@ class MultiLevelCacheServiceTest extends TestCase
         $service->get($key, function () {
             throw new RuntimeException('boom');
         }, 100);
+    }
+
+    public function testGetBulkConfigured(): void
+    {
+        $keys = ['key1', 'key2', 'key3'];
+
+        $methodCallObject = new MethodCallObject(
+            class: TestServiceA::class,
+            method: 'testMethod',
+            arguments: [$keys],
+        );
+
+        $inMemoryCache = new InMemoryCacheService(5);
+        $inMemoryCache->set(
+            key: KeyGeneratorService::getKey(
+                methodCallObject: $methodCallObject->clone(arguments: ['key2']),
+                throw: true,
+            ),
+            object: new CacheObjectWrapperDto(
+                object: [
+                    'key' => 'key2',
+                    'value' => 'value for key2',
+                ],
+                ttlSeconds: 300,
+            ),
+        );
+
+
+        $service = new MultiLevelCacheService(
+            caches: [$inMemoryCache],
+            writeL0OnSet: true,
+            stopwatch: null,
+            cacheDataCollector: null,
+            ttlRandomnessSeconds: 0,
+        );
+
+        $sourceWasCalled = false;
+
+        $results = $service->getBulk(
+            keys: $keys,
+            callable: function (array $keys) use (&$sourceWasCalled) {
+                $sourceWasCalled = true;
+                $values = [];
+                foreach ($keys as $key) {
+                    $values[] = [
+                        'key' => $key,
+                        'value' => 'value for ' . $key,
+                    ];
+                }
+                return $values;
+            },
+            methodCallObject: $methodCallObject,
+            mlcCacheableMethodAttribute: new MlcCacheableMethod(
+                ttlSeconds: 5,
+                bulkConfig: new BulkConfig(
+                    identifierSelector: 'key',
+                    listType: BulkListTypeEnum::ARRAY_ASSOC,
+                ),
+            ),
+        );
+
+        $this->assertTrue($sourceWasCalled, 'The source callable should have been called since bulk is not configured');
+        $expectedResults = [];
+        foreach ($keys as $key) {
+            $expectedResults[$key] = [
+                'key' => $key,
+                'value' => 'value for ' . $key,
+            ];
+        }
+        $this->assertEquals($expectedResults, $results, 'The results from the getBulk callable should match the expected results');
     }
 
     public function testCacheStringValue(): void

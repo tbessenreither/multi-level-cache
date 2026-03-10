@@ -47,8 +47,6 @@ class MakeTest extends TestCase
         }
         if (file_exists($this->interfaceFile)) {
             unlink($this->interfaceFile);
-            rmdir(__DIR__.'/TestFiles/Interface/Service');
-            rmdir(__DIR__.'/TestFiles/Interface');
         }
     }
 
@@ -73,7 +71,15 @@ class MakeTest extends TestCase
         $this->assertStringContainsString($this->cachedServiceFile, $outputString);
         $this->assertStringContainsString($this->interfaceFile, $outputString);
 
+        $cachedFileContent = file_get_contents($this->cachedServiceFile);
+        $this->assertNotFalse($cachedFileContent);
+        $this->assertStringContainsString('public function exampleMethod(): void', $cachedFileContent);
+        $this->assertStringContainsString('public function exampleMethodWithArguments(array $thing, bool $bool, int $int, string $string): void', $cachedFileContent);
 
+        $interfaceFileContent = file_get_contents($this->interfaceFile);
+        $this->assertNotFalse($interfaceFileContent);
+        $this->assertStringContainsString('public function exampleMethod(): void', $interfaceFileContent);
+        $this->assertStringContainsString('public function exampleMethodWithArguments(array $thing, bool $bool, int $int, string $string): void', $interfaceFileContent);
 
     }
 

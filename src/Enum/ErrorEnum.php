@@ -9,6 +9,7 @@ use Tbessenreither\MultiLevelCache\Interface\DataCollectorIssueEnumInterface;
 enum ErrorEnum: string implements DataCollectorIssueEnumInterface
 {
     case ERROR_Example = 'Oh no! An example error occurred. Please check your configuration and try again.';
+    case WARNING_BULK_CONFIG_MISSING = 'There seems to be an outdated Cached Service that tries to use bulk caching but is missing the required BulkConfig. Please update your cached services to resolve this issue.';
 
     public function getName(): string
     {

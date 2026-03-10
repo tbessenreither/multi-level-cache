@@ -33,4 +33,12 @@ class MethodCallObject
         return $this->class . ':' . $this->method;
     }
 
+    public function clone(?string $class = null, ?string $method = null, ?array $arguments = null): self
+    {
+        return new self(
+            class: $class ?? $this->class,
+            method: $method ?? $this->method,
+            arguments: $arguments ?? $this->arguments,
+        );
+    }
 }

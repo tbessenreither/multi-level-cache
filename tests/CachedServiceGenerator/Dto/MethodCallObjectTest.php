@@ -36,4 +36,32 @@ class MethodCallObjectTest extends TestCase
         $this->assertSame('App\\Service\\AnotherService:anotherMethod', $methodCallObject2->getCacheGeneratorCacheKey());
     }
 
+    public function testClone(): void
+    {
+        $original = new MethodCallObject(
+            class: 'App\\Service\\MyService',
+            method: 'myMethod',
+            arguments: ['arg1', 123],
+        );
+
+        $cloneComplete = $original->clone();
+        $this->assertEquals($original, $cloneComplete);
+
+        $cloneClass = $original->clone(class: 'App\\Service\\NewService');
+        $this->assertEquals('App\\Service\\NewService', $cloneClass->getClass());
+        $this->assertEquals($original->getMethod(), $cloneClass->getMethod());
+        $this->assertEquals($original->getArguments(), $cloneClass->getArguments());
+
+        $cloneMethod = $original->clone(method: 'myNewMethod');
+        $this->assertEquals('myNewMethod', $cloneMethod->getMethod());
+        $this->assertEquals($original->getClass(), $cloneMethod->getClass());
+        $this->assertEquals($original->getArguments(), $cloneMethod->getArguments());
+
+        $cloneArguments = $original->clone(arguments: ['newArg']);
+        $this->assertEquals(['newArg'], $cloneArguments->getArguments());
+        $this->assertEquals($original->getClass(), $cloneArguments->getClass());
+        $this->assertEquals($original->getMethod(), $cloneArguments->getMethod());
+
+    }
+
 }

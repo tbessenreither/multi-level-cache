@@ -33,6 +33,16 @@ class MultiLevelCacheFactoryTest extends TestCase
         $inMemory = $factory->getImplementationInMemory(50);
         $this->assertInstanceOf(InMemoryCacheService::class, $inMemory);
     }
+    public function testGetImplementationRedisWithPrefix(): void
+    {
+        $redisMock = $this->createStub(Redis::class);
+        $redisMock->method('isConnected')->willReturn(true);
+        $factory = $this->makeFactoryWithInjectedDeps($redisMock);
+        $redis = $factory->getImplementationRedisWithPrefix('prefix');
+        $this->assertInstanceOf(DirectRedisCacheService::class, $redis);
+        $settings = $redis->getConfiguration();
+        $this->assertEquals('prefix', $settings['prefix']);
+    }
 
     public function testGetImplementationRedisReturnsDirectRedisService(): void
     {
@@ -100,8 +110,6 @@ class MultiLevelCacheFactoryTest extends TestCase
         $collectorMock = $this->createStub(MultiLevelCacheDataCollector::class);
 
         $factory =
-
-
             new class () extends MultiLevelCacheFactory {
                 public function __construct()
                 {

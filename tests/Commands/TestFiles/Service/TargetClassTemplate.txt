@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tbessenreither\MultiLevelCache\Tests\Commands\TestFiles\Service;
 
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableMethod;
+use Tbessenreither\MultiLevelCache\Dto\BulkConfig;
+use Tbessenreither\MultiLevelCache\Enum\BulkListTypeEnum;
 
 class TargetClass
 {
@@ -12,5 +14,29 @@ class TargetClass
     public function exampleMethod(): void
     {
         return;
+    }
+    
+    #[MlcCacheableMethod(ttlSeconds: 3600)]
+    public function exampleMethodWithArguments(array $thing, bool $bool, int $int, string $string): void
+    {
+        return;
+    }
+
+    
+    #[MlcCacheableMethod(
+        ttlSeconds: 300,
+        bulkConfig: new BulkConfig(
+            identifierSelector: 'getKey',
+            listType: BulkListTypeEnum::ARRAY_ASSOC,
+        )
+    )]
+    public function bulkReverse(array $strings): array
+    {
+        $result = [];
+        foreach ($strings as $string) {
+            $result[] = new TestWrapper($string, $string);
+        }
+
+        return $result;
     }
 }

@@ -109,6 +109,130 @@ As the MLC allows you to share, for example, the Redis Cache between different S
 
 Note: the invalidator will delete all dataVersions of a given service and or method. So you don't need to run it on every version.
 
+#### Bulk Requests
+
+Sometimes you have a method that accepts an array of ids that you want to fetch in a more performant way. Maybe by a bulk SQL query or via parallel CURL requests or other methods. Those requests are very inefficient to cache with just one entry because every change in the list will create a new cache key and therefore a separate entry in the cache.
+This means:
+- A lot of wasted storage,
+- horrible cache hit rates,
+- and huge cache entries.
+
+To solve this problem the MLC provides a solution in form of BulkConfig.
+
+##### What it does:
+```mermaid
+flowchart TD
+	Request[Method Request]
+    Split(Split into single IDs)
+    Result[Add to result]
+    Todo[Add to fetch List]
+    FFS[Fetch from source]
+    Mapper[Map result to output format]
+    Return[Return result]
+    
+    Id1[ID 1]
+    Id1C{is cached?}
+    
+    Idn[ID n]
+    IdnC{is cached?}
+
+    Request --> Split
+
+    Split --> Id1
+    Id1 --> Id1C
+    Id1C -->|yes| Result
+    Id1C -->|no| Todo
+    
+    Split --> Idn
+    Idn --> IdnC
+    IdnC -->|yes| Result
+    IdnC -->|no| Todo
+
+    Todo --> FFS
+    FFS --> Result
+    Result --> Mapper
+    Mapper --> Return
+```
+
+##### How to activate it
+
+To use Bulk requests you first need to know about it's requirements.
+1. The first argument must be an array of Identifiers used to fetch the data
+2. The method must return an array of result objects or arrays
+3. Each result object needs to have the identifier in it's data structure
+
+Those requirements are needed for the cache do be able to split, read, cache, and combine the requests.
+
+Now on how to enable this feature.
+
+You need to add the `bulkConfig` attribute to the `MlcCacheableMethod`
+```php
+#[MlcCacheableMethod(
+	ttlSeconds: 300,
+	bulkConfig: new BulkConfig(
+		identifierSelector: 'getKey',
+		listType: BulkListTypeEnum::ARRAY_NUMERIC,
+	)
+)]
+public function bulkRequest(array $ids, int $anotherArgument, string $prefix = 'default'): array
+{
+	return $this->doParallelRequests($ids);
+}
+```
+
+As already mentioned the `$ids` argument must be an array of Identifiers.
+
+All other arguments are passed through to the source function and are taken into account for Cache Key generation.
+
+The response is an `object[]` or an `array[]`.
+
+The `identifierSelector` is a dot separated string trough the getters and keys of the array to the `identifier`
+So for example with the following data structure
+```php
+[
+	'responseObject1' => [
+		'id' => 'myuuid1',
+		'value' => 'value1',
+	],
+	'responseObject2' => [
+		'id' => 'myuuid2',
+		'value' => 'value2',
+	],
+	//...
+]
+```
+The `identifierSelector` would just be `id`.
+
+If your data structure is nested like this
+```php
+[
+	'responseObject1' => [
+		'entity' => [
+			'getId' => 'myuuid1',
+			'name' => 'entityName1'
+		],
+		'value' => 'value1',
+	],
+	'responseObject2' => [
+		'entity' => [
+			'getId' => 'myuuid2',
+			'name' => 'entityName2'
+		],
+		'value' => 'value2',
+	],
+	//...
+]
+```
+The `identifierSelector` would be `entity.getId`
+
+If you have real objects you just use the getter Name without the `()`.
+
+Last but not least we currently have two response types implemented.
+- Numeric array of response objects
+- Associative array of response objects (Indexed by the identifier)
+
+You can select which one you want via the `listType` argument and passing in a `BulkListTypeEnum`
+
 ### MlcCacheableService
 
 Now we haven't talked about this one. It's more of a metadata Attribute that controls the general setup and behaviour of the Cached Service.

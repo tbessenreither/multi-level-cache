@@ -44,7 +44,7 @@ class MultiLevelCacheBundle extends Bundle
 
     private function processClass(ContainerBuilder $container, string $classInstance): Definition
     {
-        if (!$container->hasDefinition($classInstance)) {
+        if (!$container->has($classInstance)) {
             $definition = new Definition($classInstance);
             $definition->setAutowired(true);
             $definition->setAutoconfigured(true);

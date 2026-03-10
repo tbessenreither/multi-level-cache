@@ -75,7 +75,7 @@ class MultiLevelCacheBundleTest extends TestCase
 
         $this->containerBuilder
             ->expects($this->atLeast(count($expectedClasses)))
-            ->method('hasDefinition')
+            ->method('has')
             ->willReturn($hasDefinition);
 
         $submittedClasses = [];
@@ -100,7 +100,7 @@ class MultiLevelCacheBundleTest extends TestCase
             $this->containerBuilder
                 ->expects($this->atLeast(count($expectedClasses)))
                 ->method('getDefinition')
-                ->willReturnCallback(function (string $id) use ($definitionMock, &$submittedClasses) {
+                ->willReturnCallback(function (string $id) use ($definitionMock, &$submittedClasses): MockObject&Definition {
                     $submittedClasses[] = $id;
                     return $definitionMock;
                 });

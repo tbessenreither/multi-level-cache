@@ -73,34 +73,61 @@ class /*{ServiceName}*/Cached implements /*{InterfacesString}*/
     {
         $ttl = $this->getTtlForMethod($name);
 
-        if($ttl === 0) {
+        if ($ttl === 0) {
             return $this->instance->$name(...$args);
         }
 
         return $this->cache->get(
             key: KeyGeneratorService::getKey(new MethodCallObject($this->instance::class, $name, $args)),
-            callable: fn () => $isStatic ? ($this->instance::class)::{$name}(...$args) : $this->instance->$name(...$args),
+            callable: fn () => $this->callSource($name, $args, $isStatic),
             ttlSeconds: $this->getTtlForMethod($name),
         );
     }
 
+    private function callCachedBulkMethod(string $name, array $args, bool $isStatic): array
+    {
+        $ttl = $this->getTtlForMethod($name);
+
+        if ($ttl === 0) {
+            return $this->instance->$name(...$args);
+        }
+
+        return $this->cache->getBulk(
+            keys: $args[0],
+            callable: fn () => $this->callSource($name, $args, $isStatic),
+            methodCallObject: new MethodCallObject($this->instance::class, $name, $args),
+            mlcCacheableMethodAttribute: $this->getMlcCacheableMethodAttribute($name),
+        );
+    }
+
+    private function callSource(string $name, array $args, bool $isStatic): mixed
+    {
+        if ($isStatic) {
+            return ($this->instance::class)::{$name}(...$args);
+        }
+
+        return $this->instance->$name(...$args);
+    }
+
     private function getMethodReflection(string $methodName): ReflectionMethod
     {
-        if(!array_key_exists($methodName, $this->reflectionMethodCache)) {
+        if (!array_key_exists($methodName, $this->reflectionMethodCache)) {
             $this->reflectionMethodCache[$methodName] = new ReflectionMethod($this->instance, $methodName);
         }
+
         return $this->reflectionMethodCache[$methodName];
     }
 
     private function getMlcCacheableMethodAttribute(string $methodName): ?MlcCacheableMethod
     {
         $reflectionMethod = $this->getMethodReflection($methodName);
+
         return MlcCacheableMethod::fromReflectionMethod($reflectionMethod, false);
     }
 
     private function getTtlForMethod(string $method): int
     {
-        if(array_key_exists($method, $this->ttlPerMethod)) {
+        if (array_key_exists($method, $this->ttlPerMethod)) {
             return $this->ttlPerMethod[$method];
         }
 
@@ -111,6 +138,7 @@ class /*{ServiceName}*/Cached implements /*{InterfacesString}*/
         } else {
             $this->ttlPerMethod[$method] = $mlcCacheableMethod->getTtlSeconds();
         }
+
         return $this->ttlPerMethod[$method];
     }
 }

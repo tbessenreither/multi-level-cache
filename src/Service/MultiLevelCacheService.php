@@ -6,14 +6,20 @@ namespace Tbessenreither\MultiLevelCache\Service;
 
 use InvalidArgumentException;
 use ReflectionClass;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableMethod;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\KeyGeneratorService;
 use Tbessenreither\MultiLevelCache\DataCollector\CacheStatistics;
 use Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector;
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
+use Tbessenreither\MultiLevelCache\Enum\BulkListTypeEnum;
+use Tbessenreither\MultiLevelCache\Enum\ErrorEnum;
 use Tbessenreither\MultiLevelCache\Enum\WarningEnum;
 use Tbessenreither\MultiLevelCache\Exception\CacheBetaDecayException;
-use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
 use Tbessenreither\MultiLevelCache\Interface\CacheInformationInterface;
 use Tbessenreither\MultiLevelCache\Interface\DataCollectorIssueEnumInterface;
+use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
+use RuntimeException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Stopwatch\Stopwatch;
 use Throwable;
@@ -30,7 +36,6 @@ use Throwable;
 class MultiLevelCacheService
 {
     /**
-     *
      * @var positive-int
      */
     public const MAX_CACHE_LEVELS = 5;
@@ -61,15 +66,15 @@ class MultiLevelCacheService
 
     /**
      * stores the object in the lowest level cache
-     * if writeL0OnSet is true, it also writes to level 0 cache
+     * if writeL0OnSet is true, it also writes to level 0 cache.
      */
     public function set(string $key, object|string|int|float|bool|array|null $object, int $ttlSeconds): void
     {
         if (is_string($object)) {
             $this->raiseIssue(WarningEnum::WARNING_STORED_STRING_VALUE);
         }
-        $this->startStopwatchEvent("set()");
-        $cacheObject = new CacheObjectWrapperDto($object, $ttlSeconds + (rand(0, $this->ttlRandomnessSeconds)));
+        $this->startStopwatchEvent('set()');
+        $cacheObject = new CacheObjectWrapperDto($object, $ttlSeconds + rand(0, $this->ttlRandomnessSeconds));
 
         $cacheLevels = $this->getCacheLevels();
         $highestLevelCache = end($cacheLevels);
@@ -79,7 +84,7 @@ class MultiLevelCacheService
             $this->writeToCacheLevel(0, $key, $cacheObject);
         }
 
-        $this->stopStopwatchEvent("set()");
+        $this->stopStopwatchEvent('set()');
     }
 
     /**
@@ -89,8 +94,7 @@ class MultiLevelCacheService
      */
     public function get(string $key, ?callable $callable = null, int $ttlSeconds = 300): object|string|int|float|bool|array|null
     {
-
-        $stopwatchEventName = "get()";
+        $stopwatchEventName = 'get()';
         $this->startStopwatchEvent($stopwatchEventName);
         try {
             foreach ($this->getCacheLevels() as $cacheLevel) {
@@ -112,36 +116,101 @@ class MultiLevelCacheService
             $callableResult = null;
         }
         $this->stopStopwatchEvent($stopwatchEventName);
+
         return $callableResult;
     }
 
+    public function getBulk(array $keys, ?callable $callable = null, MethodCallObject $methodCallObject, MlcCacheableMethod $mlcCacheableMethodAttribute): array
+    {
+        $this->raiseIssue(WarningEnum::WARNING_EXPERIMENTAL_FEATURE_BULK);
+
+        if ($mlcCacheableMethodAttribute->getBulkConfig() === null) {
+            $this->raiseIssue(ErrorEnum::WARNING_BULK_CONFIG_MISSING);
+
+            return $this->get(KeyGeneratorService::getKey($methodCallObject), $callable, $mlcCacheableMethodAttribute->getTtlSeconds());
+        }
+
+        $responses = [];
+        $requestsToSource = [];
+
+        // First deconstruct into cached and non-cached requests
+        foreach ($keys as $identifier) {
+            $key = KeyGeneratorService::getKey($this->cloneBulkMethodCallObjectWithNewIdentifier($methodCallObject, $identifier));
+
+            $cachedResponse = $this->get($key);
+            if ($cachedResponse !== null) {
+                $responses[] = $cachedResponse;
+            } else {
+                $requestsToSource[] = $identifier;
+            }
+        }
+
+        // do one bulk call to source for all non-cached requests and cache them individually
+        if (!empty($requestsToSource)) {
+            $responsesFromSource = $this->getFromSource(
+                key: $requestsToSource,
+                callable: $callable,
+                ttlSeconds: $mlcCacheableMethodAttribute->getTtlSeconds(),
+            );
+
+            foreach ($responsesFromSource as $response) {
+                if (!is_array($response) && !is_object($response)) {
+                    throw new RuntimeException('Bulk methods must return arrays of objects or arrays.');
+                }
+
+                $identifierForResponse = BulkMapperService::getIdentifierFromObjectResult($response, $mlcCacheableMethodAttribute->getBulkConfig()->getIdentifierSelector());
+                $key = KeyGeneratorService::getKey($this->cloneBulkMethodCallObjectWithNewIdentifier($methodCallObject, $identifierForResponse));
+                $this->set(
+                    key: $key,
+                    object: $response,
+                    ttlSeconds: $mlcCacheableMethodAttribute->getTtlSeconds(),
+                );
+
+                $responses[] = $response;
+            }
+        }
+
+        // Finally, map responses back to expected format
+        if (BulkListTypeEnum::ARRAY_NUMERIC === $mlcCacheableMethodAttribute->getBulkConfig()->getListType()) {
+            return BulkMapperService::mapArrayNumeric($responses);
+        } elseif (BulkListTypeEnum::ARRAY_ASSOC === $mlcCacheableMethodAttribute->getBulkConfig()->getListType()) {
+            return BulkMapperService::mapArrayAssoc($responses, $mlcCacheableMethodAttribute->getBulkConfig()->getIdentifierSelector());
+        }
+        throw new RuntimeException('Unsupported list type '.$mlcCacheableMethodAttribute->getBulkConfig()->getListType()->name);
+    }
+
     /**
-     * deletes the object from all configured caches
+     * deletes the object from all configured caches.
      */
     public function delete(string $key): void
     {
-        $this->startStopwatchEvent("delete()");
+        $this->startStopwatchEvent('delete()');
         foreach ($this->getCacheLevels() as $cacheLevel) {
             $this->deleteFromCacheLevel($cacheLevel, $key);
         }
-        $this->stopStopwatchEvent("delete()");
+        $this->stopStopwatchEvent('delete()');
+    }
+
+    public function raiseIssue(DataCollectorIssueEnumInterface $issue): void
+    {
+        $this->cacheDataCollector?->raiseIssue($issue);
     }
 
     private function constructorHelperCheckRequirements(): void
     {
         if (empty($this->caches)) {
-            throw new InvalidArgumentException("At least one cache implementation must be provided");
+            throw new InvalidArgumentException('At least one cache implementation must be provided');
         } elseif (count($this->caches) > self::MAX_CACHE_LEVELS) {
-            throw new InvalidArgumentException("Maximum number of cache levels exceeded: " . self::MAX_CACHE_LEVELS);
+            throw new InvalidArgumentException('Maximum number of cache levels exceeded: ' . self::MAX_CACHE_LEVELS);
         }
 
         if ($this->ttlRandomnessSeconds < 0) {
-            throw new InvalidArgumentException("ttlRandomnessSeconds must be non-negative");
+            throw new InvalidArgumentException('ttlRandomnessSeconds must be non-negative');
         }
 
         foreach ($this->caches as $level => $cache) {
             if (!$cache instanceof MultiLevelCacheImplementationInterface) {
-                throw new InvalidArgumentException("All cache implementations must implement MultiLevelCacheImplementationInterface&TraceableAdapter");
+                throw new InvalidArgumentException('All cache implementations must implement MultiLevelCacheImplementationInterface&TraceableAdapter');
             }
         }
     }
@@ -185,6 +254,7 @@ class MultiLevelCacheService
     {
         if ($this->cacheReadDisabled()) {
             $this->raiseIssue(WarningEnum::WARNING_CACHE_READ_DISABLED);
+
             return null;
         }
 
@@ -197,10 +267,10 @@ class MultiLevelCacheService
         }
 
         if ($cachedObject->isBetaDecayed()) {
-            throw new CacheBetaDecayException("Cache object has beta decayed");
+            throw new CacheBetaDecayException('Cache object has beta decayed');
         }
 
-        //populate higher level cache and level 0 if necessary
+        // populate higher level cache and level 0 if necessary
         if ($cacheLevel > 0) {
             $this->writeToCacheLevel($cacheLevel - 1, $key, $cachedObject);
         }
@@ -211,11 +281,13 @@ class MultiLevelCacheService
         if (is_string($cachedObject->getObject())) {
             $this->raiseIssue(WarningEnum::WARNING_STORED_STRING_VALUE);
         }
+
         return $cachedObject;
     }
 
     /**
-     * returns all cache levels
+     * returns all cache levels.
+     *
      * @return array<int,int>
      */
     private function getCacheLevels(): array
@@ -229,7 +301,7 @@ class MultiLevelCacheService
     private function getCacheImplementation(int $cacheLevel): MultiLevelCacheImplementationInterface
     {
         if (!isset($this->caches[$cacheLevel])) {
-            throw new InvalidArgumentException("Invalid cache level: " . $cacheLevel);
+            throw new InvalidArgumentException('Invalid cache level: ' . $cacheLevel);
         }
 
         return $this->caches[$cacheLevel];
@@ -263,28 +335,37 @@ class MultiLevelCacheService
         return $cachedObject;
     }
 
-    private function getFromSource(string $key, callable $callable, int $ttlSeconds): object|string|int|float|bool|array|null
+    private function getFromSource(string|array $key, callable $callable, int $ttlSeconds): object|string|int|float|bool|array|null
     {
+        $writeToCache = true;
+        $statsKey = $key;
+        if (is_array($key)) {
+            $writeToCache = false;
+            $statsKey = 'bulk';
+        }
         $sourceStatisticsLevel = count($this->caches);
-        $this->startStopwatchEvent("getFromSource()");
+        $this->startStopwatchEvent('getFromSource()');
         $this->getStatisticsObject($sourceStatisticsLevel)?->startTrackingRuntime();
 
         try {
             $callableResult = $callable($key);
-            $this->set(
-                key: $key,
-                object: $callableResult,
-                ttlSeconds: $ttlSeconds,
-            );
+            if ($writeToCache) {
+                $this->set(
+                    key: $key,
+                    object: $callableResult,
+                    ttlSeconds: $ttlSeconds,
+                );
+            }
         } catch (Throwable $throwable) {
-            $this->registerCacheMiss($key, $sourceStatisticsLevel);
+            $this->registerCacheMiss($statsKey, $sourceStatisticsLevel);
             throw $throwable;
         } finally {
             $this->getStatisticsObject($sourceStatisticsLevel)?->stopTrackingRuntime(CacheStatistics::TYPE_READ);
-            $this->stopStopwatchEvent("getFromSource()");
+            $this->stopStopwatchEvent('getFromSource()');
         }
 
-        $this->registerCacheHit($key, $sourceStatisticsLevel);
+        $this->registerCacheHit($statsKey, $sourceStatisticsLevel);
+
         return $callableResult;
     }
 
@@ -323,7 +404,7 @@ class MultiLevelCacheService
     private function startStopwatchEvent(string $name): void
     {
         if ($this->stopwatch !== null && $this->cacheDataCollector?->isCollecting()) {
-            $this->stopwatch->start($this->cacheGroupName . ':' . $name, "MultiLevelCacheService");
+            $this->stopwatch->start($this->cacheGroupName . ':' . $name, 'MultiLevelCacheService');
         }
     }
 
@@ -349,14 +430,17 @@ class MultiLevelCacheService
         $this->cacheDataCollector?->registerBetaDecay($this->cacheGroupName, $cacheLevel, $key);
     }
 
-    private function raiseIssue(DataCollectorIssueEnumInterface $issue): void
-    {
-        $this->cacheDataCollector?->raiseIssue($issue);
-    }
-
     private function cacheReadDisabled(): bool
     {
         return $this->cacheReadDisabled;
+    }
+
+    private function cloneBulkMethodCallObjectWithNewIdentifier(MethodCallObject $methodCallObject, string $newIdentifier): MethodCallObject
+    {
+        $arguments = $methodCallObject->getArguments();
+        $arguments[0] = $newIdentifier;
+
+        return $methodCallObject->clone(arguments: $arguments);
     }
 
 }
