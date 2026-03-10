@@ -5603,22 +5603,23 @@
         },
         {
             "name": "tbessenreither/copycat",
-            "version": "v0.7.2",
+            "version": "v0.7.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tbessenreither/copycat.git",
-                "reference": "1b11fdf6c0af1ca08243938fc6114a8d9ae78a6c"
+                "reference": "4079552263406c82c86d4ca40ac558964ef349e3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tbessenreither/copycat/zipball/1b11fdf6c0af1ca08243938fc6114a8d9ae78a6c",
-                "reference": "1b11fdf6c0af1ca08243938fc6114a8d9ae78a6c",
+                "url": "https://api.github.com/repos/tbessenreither/copycat/zipball/4079552263406c82c86d4ca40ac558964ef349e3",
+                "reference": "4079552263406c82c86d4ca40ac558964ef349e3",
                 "shasum": ""
             },
             "require": {
                 "php": "^8.4"
             },
             "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.94",
                 "phpunit/phpunit": "^12.5"
             },
             "type": "library",
@@ -5639,9 +5640,9 @@
             "description": "tool for copying files and directories from bundles to your project",
             "support": {
                 "issues": "https://github.com/tbessenreither/copycat/issues",
-                "source": "https://github.com/tbessenreither/copycat/tree/v0.7.2"
+                "source": "https://github.com/tbessenreither/copycat/tree/v0.7.3"
             },
-            "time": "2026-03-02T22:41:48+00:00"
+            "time": "2026-03-09T20:20:29+00:00"
         },
         {
             "name": "theseer/tokenizer",

@@ -6,6 +6,9 @@ namespace Tbessenreither\MultiLevelCache\Service;
 
 use InvalidArgumentException;
 use ReflectionClass;
+use RuntimeException;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Stopwatch\Stopwatch;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableMethod;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\KeyGeneratorService;
@@ -19,9 +22,6 @@ use Tbessenreither\MultiLevelCache\Exception\CacheBetaDecayException;
 use Tbessenreither\MultiLevelCache\Interface\CacheInformationInterface;
 use Tbessenreither\MultiLevelCache\Interface\DataCollectorIssueEnumInterface;
 use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
-use RuntimeException;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\Stopwatch\Stopwatch;
 use Throwable;
 
 /**
@@ -176,7 +176,8 @@ class MultiLevelCacheService
         } elseif (BulkListTypeEnum::ARRAY_ASSOC === $mlcCacheableMethodAttribute->getBulkConfig()->getListType()) {
             return BulkMapperService::mapArrayAssoc($responses, $mlcCacheableMethodAttribute->getBulkConfig()->getIdentifierSelector());
         }
-        throw new RuntimeException('Unsupported list type '.$mlcCacheableMethodAttribute->getBulkConfig()->getListType()->name);
+
+        throw new RuntimeException('Unsupported list type ' . $mlcCacheableMethodAttribute->getBulkConfig()->getListType()->name);
     }
 
     /**
@@ -261,6 +262,7 @@ class MultiLevelCacheService
         $cachedObject = $this->getFromCacheLevel($cacheLevel, $key);
         if ($cachedObject === null) {
             $this->registerCacheMiss($key, $cacheLevel);
+
             return null;
         } else {
             $this->registerCacheHit($key, $cacheLevel);
@@ -358,6 +360,7 @@ class MultiLevelCacheService
             }
         } catch (Throwable $throwable) {
             $this->registerCacheMiss($statsKey, $sourceStatisticsLevel);
+
             throw $throwable;
         } finally {
             $this->getStatisticsObject($sourceStatisticsLevel)?->stopTrackingRuntime(CacheStatistics::TYPE_READ);

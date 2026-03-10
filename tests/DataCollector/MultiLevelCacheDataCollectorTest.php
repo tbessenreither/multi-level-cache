@@ -8,14 +8,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use stdClass;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Tbessenreither\MultiLevelCache\DataCollector\CacheStatistics;
 use Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector;
 use Tbessenreither\MultiLevelCache\Dto\DataCollectorCacheInfoDto;
 use Tbessenreither\MultiLevelCache\Dto\DataCollectorIssueDto;
 use Tbessenreither\MultiLevelCache\Interface\DataCollectorIssueEnumInterface;
-use stdClass;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 #[CoversClass(MultiLevelCacheDataCollector::class)]
 #[UsesClass(CacheStatistics::class)]

@@ -12,10 +12,10 @@ use Tbessenreither\MultiLevelCache\Tests\CachedServiceGenerator\Service\FileOper
 #[CoversClass(FileOperationService::class)]
 class FileOperationServiceTest extends TestCase
 {
-    private string $newCachedFilePath = __DIR__.'/FileOperationServiceClasses/TargetClassCached.php';
-    private string $newCopiedFilePath = __DIR__.'/FileOperationServiceClasses/TargetClassCopy.php';
+    private string $newCachedFilePath = __DIR__ . '/FileOperationServiceClasses/TargetClassCached.php';
+    private string $newCopiedFilePath = __DIR__ . '/FileOperationServiceClasses/TargetClassCopy.php';
     private string $originalClass = TargetClass::class;
-    private string $newClass = TargetClass::class.'Cached';
+    private string $newClass = TargetClass::class . 'Cached';
 
     public function setUp(): void
     {
@@ -28,7 +28,7 @@ class FileOperationServiceTest extends TestCase
             unlink($this->newCopiedFilePath);
         }
 
-        $fileContent = file_get_contents(__DIR__.'/FileOperationServiceClasses/TargetClass.php');
+        $fileContent = file_get_contents(__DIR__ . '/FileOperationServiceClasses/TargetClass.php');
         $fileContent = str_replace('TargetClass', 'TargetClassCopy', $fileContent);
         file_put_contents($this->newCopiedFilePath, $fileContent);
 

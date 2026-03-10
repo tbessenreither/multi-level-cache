@@ -4,16 +4,15 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\Tests\Service\Implementations;
 
-use Exception;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
-use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
-use Tbessenreither\MultiLevelCache\Service\Implementations\FileCacheService;
 use stdClass;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
+use Tbessenreither\MultiLevelCache\Service\Implementations\FileCacheService;
 
 #[CoversClass(FileCacheService::class)]
 

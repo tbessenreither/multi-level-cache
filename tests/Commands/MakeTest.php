@@ -10,11 +10,11 @@ use PHPUnit\Framework\TestCase;
 #[CoversNothing]
 class MakeTest extends TestCase
 {
-    private string $originalServiceTemplate = __DIR__.'/TestFiles/Service/TargetClassTemplate.txt';
+    private string $originalServiceTemplate = __DIR__ . '/TestFiles/Service/TargetClassTemplate.txt';
     private string $originalServiceClass = 'Tbessenreither\MultiLevelCache\Tests\Commands\TestFiles\Service\TargetClass';
-    private string $originalServiceFile = __DIR__.'/TestFiles/Service/TargetClass.php';
-    private string $cachedServiceFile = __DIR__.'/TestFiles/Service/TargetClassCached.php';
-    private string $interfaceFile = __DIR__.'/TestFiles/Interface/Service/TargetClassInterface.php';
+    private string $originalServiceFile = __DIR__ . '/TestFiles/Service/TargetClass.php';
+    private string $cachedServiceFile = __DIR__ . '/TestFiles/Service/TargetClassCached.php';
+    private string $interfaceFile = __DIR__ . '/TestFiles/Interface/Service/TargetClassInterface.php';
 
     public function setUp(): void
     {
@@ -28,8 +28,8 @@ class MakeTest extends TestCase
         }
         if (file_exists($this->interfaceFile)) {
             unlink($this->interfaceFile);
-            rmdir(__DIR__.'/TestFiles/Interface/Service');
-            rmdir(__DIR__.'/TestFiles/Interface');
+            rmdir(__DIR__ . '/TestFiles/Interface/Service');
+            rmdir(__DIR__ . '/TestFiles/Interface');
         }
 
         copy($this->originalServiceTemplate, $this->originalServiceFile);
@@ -52,12 +52,12 @@ class MakeTest extends TestCase
 
     public function testMake(): void
     {
-        $makePath = realpath(__DIR__.'/../../src/Commands/make.php');
+        $makePath = realpath(__DIR__ . '/../../src/Commands/make.php');
         $this->assertNotFalse($makePath);
 
         $classDotNotation = str_replace('\\', '.', $this->originalServiceClass);
 
-        $command = sprintf('php %s %s 2>&1', $makePath, '--service='.$classDotNotation);
+        $command = sprintf('php %s %s 2>&1', $makePath, '--service=' . $classDotNotation);
         exec($command, $output, $resultCode);
         $this->assertSame(0, $resultCode, implode("\n", $output));
 

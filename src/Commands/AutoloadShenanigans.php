@@ -25,5 +25,5 @@ $vendorAutoload = (function (): string {
 })();
 
 $loader = require $vendorAutoload;
-$loader->addPsr4('Tbessenreither\\MultiLevelCache\\', realpath(__DIR__ . '/..'.'/'));
-$loader->addPsr4('Tbessenreither\\MultiLevelCache\\Tests\\', realpath(__DIR__ . '/../../tests').'/');
+$loader->addPsr4('Tbessenreither\\MultiLevelCache\\', realpath(__DIR__ . '/..' . '/'));
+$loader->addPsr4('Tbessenreither\\MultiLevelCache\\Tests\\', realpath(__DIR__ . '/../../tests') . '/');

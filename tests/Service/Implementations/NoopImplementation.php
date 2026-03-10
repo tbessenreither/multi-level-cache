@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\Tests\Service\Implementations;
 
+use stdClass;
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
 use Tbessenreither\MultiLevelCache\Interface\CacheInformationInterface;
 use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
-use stdClass;
 
 class NoopImplementation implements MultiLevelCacheImplementationInterface, CacheInformationInterface
 {

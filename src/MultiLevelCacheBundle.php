@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache;
 
-use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\InvalidatorService;
 use Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector;
 use Tbessenreither\MultiLevelCache\DependencyInjection\Compiler\CompilerPass;
@@ -57,6 +57,7 @@ class MultiLevelCacheBundle extends Bundle
             $definition->setAutowired(true);
             $definition->setAutoconfigured(true);
             $definition->setPublic(true);
+
             return $definition;
 
         }

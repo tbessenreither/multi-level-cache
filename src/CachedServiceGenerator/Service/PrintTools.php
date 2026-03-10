@@ -50,7 +50,7 @@ class PrintTools
             }
             $table[] = '| ' . implode(' | ', $cols) . ' |';
         }
-        echo implode(PHP_EOL, $table).PHP_EOL;
+        echo implode(PHP_EOL, $table) . PHP_EOL;
     }
 
     public static function line(string $line): void
@@ -67,7 +67,7 @@ class PrintTools
     {
         $xOffset = 10;
         self::separator(strlen($line) + $xOffset * 2, '=');
-        echo str_repeat(' ', $xOffset). "\033[32m" . $line . "\033[0m" . PHP_EOL;
+        echo str_repeat(' ', $xOffset) . "\033[32m" . $line . "\033[0m" . PHP_EOL;
         self::separator(strlen($line) + $xOffset * 2, '=');
         echo PHP_EOL;
     }
@@ -76,23 +76,23 @@ class PrintTools
     {
         $xOffset = 5;
         self::separator(strlen($line) + $xOffset * 2, '-');
-        echo str_repeat(' ', $xOffset). "\033[34m" . $line . "\033[0m" . PHP_EOL;
+        echo str_repeat(' ', $xOffset) . "\033[34m" . $line . "\033[0m" . PHP_EOL;
         self::separator(strlen($line) + $xOffset * 2, '-');
         echo PHP_EOL;
     }
 
     public static function success(string $line): void
     {
-        echo PHP_EOL."\033[32m" . $line . "\033[0m" . PHP_EOL;
+        echo PHP_EOL . "\033[32m" . $line . "\033[0m" . PHP_EOL;
     }
 
     public static function error(string $line): void
     {
-        echo PHP_EOL."\033[31m" . $line . "\033[0m" . PHP_EOL;
+        echo PHP_EOL . "\033[31m" . $line . "\033[0m" . PHP_EOL;
     }
 
     public static function info(string $line): void
     {
-        echo PHP_EOL."\033[34m" . $line . "\033[0m" . PHP_EOL;
+        echo PHP_EOL . "\033[34m" . $line . "\033[0m" . PHP_EOL;
     }
 }

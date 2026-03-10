@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service;
 
-use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachedService;
 use Generator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
 use RuntimeException;
 use SplFileInfo;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachedService;
 use Throwable;
 
 class FetchAllCachedServices
@@ -111,12 +111,12 @@ class FetchAllCachedServices
     private static function getSrcDirByVendor(): false|string
     {
         $currentDir = dirname(__DIR__);
-        $itterations = 0;
+        $iterations = 0;
 
         // Traverse up until we find the "vendor" directory either as the current directory or in the parent directory as a sibling (When ran in Unit Tests).
         while (basename($currentDir) !== 'vendor' && !file_exists($currentDir . '/../vendor') && mb_strlen($currentDir) > 1) {
-            $itterations++;
-            if ($itterations > self::MAX_DIR_ITERATIONS) {
+            $iterations++;
+            if ($iterations > self::MAX_DIR_ITERATIONS) {
                 throw new RuntimeException("Could not find 'vendor' directory after " . self::MAX_DIR_ITERATIONS . " iterations. Aborting.");
             }
 
@@ -131,6 +131,7 @@ class FetchAllCachedServices
         if (!is_dir($sourceDir)) {
             return false;
         }
+
         return $sourceDir;
     }
 
@@ -138,10 +139,10 @@ class FetchAllCachedServices
     {
         try {
             $currentDir = dirname(__DIR__);
-            $itterations = 0;
+            $iterations = 0;
             do {
-                $itterations++;
-                if ($itterations > self::MAX_DIR_ITERATIONS) {
+                $iterations++;
+                if ($iterations > self::MAX_DIR_ITERATIONS) {
                     throw new RuntimeException("Could not find composer.json after " . self::MAX_DIR_ITERATIONS . " iterations. Aborting.");
                 }
 
@@ -159,6 +160,7 @@ class FetchAllCachedServices
                         || (!isset($composerJson['autoload']) || !isset($composerJson['autoload']['psr-4']))
                     ) {
                         $currentDir = $nextPath;
+
                         continue;
                     }
 

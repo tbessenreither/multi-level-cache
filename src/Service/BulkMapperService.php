@@ -48,7 +48,7 @@ class BulkMapperService
             } elseif (is_string($currentSelection) || is_int($currentSelection)) {
                 return $currentSelection;
             } else {
-                throw new InvalidArgumentException('Identifier selector is not valid. Expected array or object but got '.gettype($currentSelection));
+                throw new InvalidArgumentException('Identifier selector is not valid. Expected array or object but got ' . gettype($currentSelection));
             }
         } while (!empty($selectorParts));
 

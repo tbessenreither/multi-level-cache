@@ -4,6 +4,17 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\Tests\Service;
 
+use DateTime;
+use Generator;
+use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\MockObject\MockObject;
+use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use stdClass;
+use Symfony\Component\Stopwatch\Stopwatch;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableMethod;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableService;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
@@ -19,17 +30,6 @@ use Tbessenreither\MultiLevelCache\Service\Implementations\InMemoryCacheService;
 use Tbessenreither\MultiLevelCache\Service\MultiLevelCacheService;
 use Tbessenreither\MultiLevelCache\Tests\CachedServiceGenerator\Service\TestSrc\TestServiceA;
 use Tbessenreither\MultiLevelCache\Tests\Service\Implementations\NoopImplementation;
-use DateTime;
-use Generator;
-use InvalidArgumentException;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\UsesClass;
-use PHPUnit\Framework\MockObject\MockObject;
-use PHPUnit\Framework\TestCase;
-use RuntimeException;
-use stdClass;
-use Symfony\Component\Stopwatch\Stopwatch;
 use TypeError;
 
 #[CoversClass(MultiLevelCacheService::class)]
@@ -396,6 +396,7 @@ class MultiLevelCacheServiceTest extends TestCase
                         'value' => 'value for ' . $key,
                     ];
                 }
+
                 return $values;
             },
             methodCallObject: $methodCallObject,

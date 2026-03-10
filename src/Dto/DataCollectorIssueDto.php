@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\Dto;
 
-use Tbessenreither\MultiLevelCache\Enum\ErrorEnum;
-use Tbessenreither\MultiLevelCache\Enum\WarningEnum;
 use Tbessenreither\MultiLevelCache\Interface\DataCollectorIssueEnumInterface;
 
 readonly class DataCollectorIssueDto

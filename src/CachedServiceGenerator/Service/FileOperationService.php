@@ -18,6 +18,7 @@ class FileOperationService
 
         self::ensureDirectoryExists(dirname($targetFile));
         self::writeFileToDisk($targetFile, $code);
+
         return $targetFile;
     }
 
@@ -58,6 +59,7 @@ class FileOperationService
                             'namespacePartKey' => $namespacePartKey,
                             'pathPartKey' => $pathPartKey,
                         ];
+
                         break;
                     }
                 }
@@ -68,11 +70,11 @@ class FileOperationService
         }
 
         if ($found === false) {
-            throw new RuntimeException('Could not map namespace to path for class: ' . $class.' and path '.$originalPath);
+            throw new RuntimeException('Could not map namespace to path for class: ' . $class . ' and path ' . $originalPath);
         }
 
-        $rootDirectory = implode(DIRECTORY_SEPARATOR, array_slice($pathParts, 0, $found['pathPartKey'])).DIRECTORY_SEPARATOR;
-        $psr4Root = implode('\\', array_slice($namespaceParts, 0, $found['namespacePartKey'])).'\\';
+        $rootDirectory = implode(DIRECTORY_SEPARATOR, array_slice($pathParts, 0, $found['pathPartKey'])) . DIRECTORY_SEPARATOR;
+        $psr4Root = implode('\\', array_slice($namespaceParts, 0, $found['namespacePartKey'])) . '\\';
 
         return [
             'namespace' => $psr4Root,
@@ -110,18 +112,21 @@ class FileOperationService
         foreach ($fileLines as $lineNumber => $line) {
             if (str_contains($line, 'class ' . (new ReflectionClass($class))->getShortName())) {
                 $lineWithClassDeclaration = $lineNumber;
+
                 break;
             }
         }
 
         if ($lineWithClassDeclaration === null) {
             echo "Class declaration not found in file: $filePath. Please add the interface '$interface' to the class yourself." . PHP_EOL;
+
             return;
         }
 
         $declarationLine = &$fileLines[$lineWithClassDeclaration];
         if (str_contains($declarationLine, $interfaceShortName)) {
             echo "Class '$class' already implements interface '$interface' in file: $filePath" . PHP_EOL;
+
             return;
         }
 
@@ -190,10 +195,12 @@ class FileOperationService
             foreach ($fileLines as $lineNumber => $line) {
                 if (str_starts_with(trim($line), 'namespace ')) {
                     $insertUseAfterLine = $lineNumber;
+
                     break;
                 }
             }
         }
+
         return $insertUseAfterLine + 1;
     }
 

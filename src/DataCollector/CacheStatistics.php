@@ -189,8 +189,10 @@ class CacheStatistics
             if ($aTotal === $bTotal) {
                 return $b['misses'] <=> $a['misses'];
             }
+
             return $bTotal <=> $aTotal;
         });
+
         return $sorted;
     }
 
@@ -230,6 +232,7 @@ class CacheStatistics
         if ($this->cachedKeys === null) {
             return null;
         }
+
         return array_unique(array_values($this->cachedKeys));
     }
 
