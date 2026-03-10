@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\Tests\Dto;
 
-use PHPUnit\Framework\TestCase;
-use Tbessenreither\MultiLevelCache\Dto\DataCollectorCacheInfoDto;
-use Tbessenreither\MultiLevelCache\DataCollector\CacheStatistics;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+use Tbessenreither\MultiLevelCache\DataCollector\CacheStatistics;
+use Tbessenreither\MultiLevelCache\Dto\DataCollectorCacheInfoDto;
 
 #[CoversClass(DataCollectorCacheInfoDto::class)]
 

@@ -86,6 +86,7 @@ class MultiLevelCacheBundleTest extends TestCase
                 ->method('setDefinition')
                 ->willReturnCallback(function (string $id, Definition $definition) use (&$submittedClasses) {
                     $submittedClasses[] = $id;
+
                     return $definition;
                 });
         } else {
@@ -102,6 +103,7 @@ class MultiLevelCacheBundleTest extends TestCase
                 ->method('getDefinition')
                 ->willReturnCallback(function (string $id) use ($definitionMock, &$submittedClasses): MockObject&Definition {
                     $submittedClasses[] = $id;
+
                     return $definitionMock;
                 });
         }

@@ -70,6 +70,7 @@ class CacheObjectWrapperDto
     {
         $elapsed = time() - $this->createdAt;
         $ttlLeft = $this->ttlSeconds - $elapsed;
+
         return max(0, $ttlLeft);
     }
 

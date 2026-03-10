@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\Tests\Service\Implementations;
 
-use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
-use Tbessenreither\MultiLevelCache\Exception\CacheConnectionException;
-use Tbessenreither\MultiLevelCache\Service\Implementations\DirectRedisCacheService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Redis;
 use RedisCluster;
+use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
+use Tbessenreither\MultiLevelCache\Exception\CacheConnectionException;
+use Tbessenreither\MultiLevelCache\Service\Implementations\DirectRedisCacheService;
 
 #[CoversClass(DirectRedisCacheService::class)]
 #[CoversClass(CacheObjectWrapperDto::class)]

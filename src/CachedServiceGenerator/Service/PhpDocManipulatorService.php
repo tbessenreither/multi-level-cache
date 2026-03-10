@@ -36,6 +36,7 @@ class PhpDocManipulatorService
                 if (str_starts_with($docLines[$i], '@')) {
                     array_splice($docLines, $i, 0, $linesToAdd);
                     $inserted = true;
+
                     break;
                 }
             }
@@ -49,6 +50,7 @@ class PhpDocManipulatorService
                 if (str_starts_with($docLines[$i], '@')) {
                     array_splice($docLines, $i + 1, 0, $linesToAdd);
                     $inserted = true;
+
                     break;
                 }
             }
@@ -79,8 +81,10 @@ class PhpDocManipulatorService
             if (str_starts_with($trimmedLine, '*')) {
                 $indent .= ' ';
             }
+
             return $indent . $trimmedLine;
         }, $lines);
+
         return implode("\n", $indentedLines);
     }
 }

@@ -13,6 +13,7 @@ class ArgParser
     public static function parse(): array
     {
         global $argv;
+
         return self::parseArgvArray($argv);
     }
 
@@ -42,6 +43,7 @@ class ArgParser
                 }
             }
         }
+
         return $result;
     }
 }

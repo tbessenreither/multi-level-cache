@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\Tests\Service\Implementations;
 
-use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
-use Tbessenreither\MultiLevelCache\Service\Implementations\InMemoryCacheService;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
+use Tbessenreither\MultiLevelCache\Service\Implementations\InMemoryCacheService;
 
 #[CoversClass(InMemoryCacheService::class)]
 #[CoversClass(CacheObjectWrapperDto::class)]

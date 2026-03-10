@@ -11,8 +11,8 @@ use Symfony\Component\HttpKernel\KernelInterface;
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
 use Tbessenreither\MultiLevelCache\Exception\CacheEntryCorruptedException;
 use Tbessenreither\MultiLevelCache\Exception\CacheEntryExpiredException;
-use Tbessenreither\MultiLevelCache\Interface\CacheInformationInterface;
 use Tbessenreither\MultiLevelCache\Exception\CacheMissException;
+use Tbessenreither\MultiLevelCache\Interface\CacheInformationInterface;
 use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
 
 class FileCacheService implements MultiLevelCacheImplementationInterface, CacheInformationInterface
@@ -73,8 +73,9 @@ class FileCacheService implements MultiLevelCacheImplementationInterface, CacheI
             }
 
             return $object;
-        } catch (CacheEntryCorruptedException | CacheEntryExpiredException) {
+        } catch (CacheEntryCorruptedException|CacheEntryExpiredException) {
             $this->delete($key);
+
             return null;
         } catch (Exception) {
             return null;
@@ -142,6 +143,7 @@ class FileCacheService implements MultiLevelCacheImplementationInterface, CacheI
     private function getCacheFilePath(string $key): string
     {
         $dir = $this->getCacheDirectory();
+
         return $dir . '/' . $this->getPrefixedCacheKey($key) . '.cache';
     }
 

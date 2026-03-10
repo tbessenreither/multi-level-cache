@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service;
 
-use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachedService;
 use Generator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use ReflectionClass;
 use RuntimeException;
 use SplFileInfo;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachedService;
 use Throwable;
 
 class FetchAllCachedServices
@@ -131,6 +131,7 @@ class FetchAllCachedServices
         if (!is_dir($sourceDir)) {
             return false;
         }
+
         return $sourceDir;
     }
 
@@ -159,6 +160,7 @@ class FetchAllCachedServices
                         || (!isset($composerJson['autoload']) || !isset($composerJson['autoload']['psr-4']))
                     ) {
                         $currentDir = $nextPath;
+
                         continue;
                     }
 

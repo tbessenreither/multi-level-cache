@@ -12,7 +12,7 @@ class UpdateTest extends TestCase
 {
     public function testUpdate(): void
     {
-        $makePath = realpath(__DIR__.'/../../src/Commands/update.php');
+        $makePath = realpath(__DIR__ . '/../../src/Commands/update.php');
         $this->assertNotFalse($makePath);
 
         $command = sprintf('php %s 2>&1', $makePath);

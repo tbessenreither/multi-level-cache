@@ -4,16 +4,14 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\DataCollector;
 
-use InvalidArgumentException;
-use Tbessenreither\MultiLevelCache\DataCollector\CacheStatistics;
-use Tbessenreither\MultiLevelCache\Dto\DataCollectorCacheInfoDto;
-use Tbessenreither\MultiLevelCache\Dto\DataCollectorIssueDto;
-use Tbessenreither\MultiLevelCache\Interface\DataCollectorIssueEnumInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\DataCollector\DataCollector;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
+use Tbessenreither\MultiLevelCache\Dto\DataCollectorCacheInfoDto;
+use Tbessenreither\MultiLevelCache\Dto\DataCollectorIssueDto;
+use Tbessenreither\MultiLevelCache\Interface\DataCollectorIssueEnumInterface;
 use Throwable;
 
 class MultiLevelCacheDataCollector extends DataCollector implements DataCollectorInterface
@@ -146,6 +144,7 @@ class MultiLevelCacheDataCollector extends DataCollector implements DataCollecto
             }
         }
         $adapters = array_unique($adapters);
+
         return $adapters;
     }
 

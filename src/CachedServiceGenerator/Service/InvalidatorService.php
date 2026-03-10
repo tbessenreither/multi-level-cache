@@ -25,6 +25,7 @@ class InvalidatorService
             $generateKey = KeyGeneratorService::getKeyPatternForClass(new MethodCallObject($classString, '', []));
 
             $this->directRedisCacheService->deleteByPattern($generateKey);
+
             return true;
         } catch (Throwable $e) {
             return false;
@@ -37,6 +38,7 @@ class InvalidatorService
             $generateKey = KeyGeneratorService::getKeyPatternForMethod(new MethodCallObject($classString, $method, []));
 
             $this->directRedisCacheService->deleteByPattern($generateKey);
+
             return true;
         } catch (Throwable $e) {
             return false;

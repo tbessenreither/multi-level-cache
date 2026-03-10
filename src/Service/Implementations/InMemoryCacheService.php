@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tbessenreither\MultiLevelCache\Service\Implementations;
 
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
-use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
 use Tbessenreither\MultiLevelCache\Interface\CacheInformationInterface;
+use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
 
 /**
  * Simple In-Memory Cache Implementation with size and TTL limits.
@@ -58,6 +58,7 @@ class InMemoryCacheService implements MultiLevelCacheImplementationInterface, Ca
     public function clear(): bool
     {
         $this->objectCache = [];
+
         return true;
     }
 

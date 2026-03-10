@@ -30,6 +30,7 @@ class RenderTemplateService
             }
             $template = str_replace("/*{{$key}}*/", $value, $template);
         }
+
         return $template;
     }
 
@@ -39,7 +40,7 @@ class RenderTemplateService
     private static function getTemplate(string $name, ?string $templateDirectory = null): string
     {
         if ($templateDirectory === null) {
-            $templateDirectory = __DIR__.'/'.self::TEMPLATE_DIRECTORY;
+            $templateDirectory = __DIR__ . '/' . self::TEMPLATE_DIRECTORY;
         } else {
             $templateDirectory = rtrim($templateDirectory, '/');
         }
@@ -47,6 +48,7 @@ class RenderTemplateService
         if (!file_exists($templatePath)) {
             throw new RuntimeException("Template file not found: {$templatePath}");
         }
+
         return file_get_contents($templatePath);
     }
 }

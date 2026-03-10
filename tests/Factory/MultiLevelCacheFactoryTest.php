@@ -8,15 +8,15 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Redis;
 use ReflectionClass;
+use Symfony\Component\Stopwatch\Stopwatch;
 use Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector;
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
+use Tbessenreither\MultiLevelCache\Enum\CacheTypeEnum;
+use Tbessenreither\MultiLevelCache\Exception\CacheConnectionException;
 use Tbessenreither\MultiLevelCache\Factory\MultiLevelCacheFactory;
 use Tbessenreither\MultiLevelCache\Service\Implementations\DirectRedisCacheService;
 use Tbessenreither\MultiLevelCache\Service\Implementations\InMemoryCacheService;
 use Tbessenreither\MultiLevelCache\Service\MultiLevelCacheService;
-use Symfony\Component\Stopwatch\Stopwatch;
-use Tbessenreither\MultiLevelCache\Enum\CacheTypeEnum;
-use Tbessenreither\MultiLevelCache\Exception\CacheConnectionException;
 
 #[CoversClass(MultiLevelCacheFactory::class)]
 #[CoversClass(InMemoryCacheService::class)]

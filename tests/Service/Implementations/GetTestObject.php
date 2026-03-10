@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\Tests\Service\Implementations;
 
-use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
 use stdClass;
+use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
 
 class GetTestObject
 {
@@ -20,6 +20,7 @@ class GetTestObject
     public static function getWrappedTestObject(string $testData, int $ttlSeconds): CacheObjectWrapperDto
     {
         $obj = self::getTestObject($testData);
+
         return new CacheObjectWrapperDto(object: $obj, ttlSeconds: $ttlSeconds);
     }
 

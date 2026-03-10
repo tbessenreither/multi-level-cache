@@ -20,6 +20,7 @@ function resolveServiceClass(string $service): ?string
     if (class_exists($fqcn)) {
         return $fqcn;
     }
+
     return null;
 }
 
@@ -40,6 +41,7 @@ try {
 
     if (!isset($arguments['service'])) {
         PrintTools::error("No service specified. Use --service=App.Service.ExampleService to specify the service.");
+
         exit(1);
     }
 
@@ -47,9 +49,10 @@ try {
     $serviceClass = resolveServiceClass($arguments['service']);
     if (!$serviceClass) {
         PrintTools::error("Service class for '{$arguments['service']}' not found.");
+
         exit(1);
     }
-    PrintTools::line("Service class found: {$serviceClass}".PHP_EOL);
+    PrintTools::line("Service class found: {$serviceClass}" . PHP_EOL);
 
     PrintTools::subHeadline('Generating cached service.');
     $service = new MakeCachedServiceService();
@@ -57,10 +60,11 @@ try {
 
     if (!$targetFile) {
         PrintTools::error("Failed to generate cached service for '{$serviceClass}'.");
+
         exit(1);
     }
 
-    PrintTools::success("Cached service generated successfully.".PHP_EOL);
+    PrintTools::success("Cached service generated successfully." . PHP_EOL);
 
     PrintTools::table(
         ['Key', 'Value'],
@@ -69,9 +73,10 @@ try {
             ['Interface', $targetFile['interface']],
         ],
     );
-    echo PHP_EOL.PHP_EOL;
+    echo PHP_EOL . PHP_EOL;
 
 } catch (Exception $e) {
-    PrintTools::error("An error occurred: ".PHP_EOL . $e->getMessage());
+    PrintTools::error("An error occurred: " . PHP_EOL . $e->getMessage());
+
     exit(1);
 }
