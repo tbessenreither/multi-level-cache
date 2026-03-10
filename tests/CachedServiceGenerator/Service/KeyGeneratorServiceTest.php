@@ -125,7 +125,6 @@ class KeyGeneratorServiceTest extends TestCase
         );
 
         $keyPattern = KeyGeneratorService::defaultKeyGenerator($methodCallObject);
-        var_dump($keyPattern);
 
     }
 
@@ -139,7 +138,6 @@ class KeyGeneratorServiceTest extends TestCase
         );
 
         $keyPattern = KeyGeneratorService::defaultKeyGenerator($methodCallObject);
-        var_dump($keyPattern);
 
     }
 }

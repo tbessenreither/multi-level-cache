@@ -7,15 +7,15 @@ namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute;
 use Attribute;
 use InvalidArgumentException;
 use ReflectionMethod;
+use Tbessenreither\MultiLevelCache\Dto\BulkConfig;
 
 #[Attribute(Attribute::TARGET_METHOD)]
-
-
 class MlcCacheableMethod
 {
     public function __construct(
         private int $ttlSeconds,
         private ?string $dataVersion = null,
+        private ?BulkConfig $bulkConfig = null,
     ) {
         if ($ttlSeconds <= 0) {
             throw new InvalidArgumentException('TTL must be a positive integer.');
@@ -46,4 +46,8 @@ class MlcCacheableMethod
         return $this->dataVersion;
     }
 
+    public function getBulkConfig(): ?BulkConfig
+    {
+        return $this->bulkConfig;
+    }
 }

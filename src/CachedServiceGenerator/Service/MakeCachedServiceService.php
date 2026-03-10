@@ -184,6 +184,9 @@ class MakeCachedServiceService
 
     /**
      * Generate PHP code for all dynamic methods.
+     *
+     * @param ReflectionMethod[] $classMethods
+     * @param string[] $useLines
      * @return array{methods: string, interfaces: string}
      */
     private function generateDynamicMethodsCode(array $classMethods, array $useLines): array
@@ -200,6 +203,7 @@ class MakeCachedServiceService
 
         $methodDoc = false;
         foreach ($classMethods as $method) {
+            $mlcCacheableMethodAttribute = MlcCacheableMethod::fromReflectionMethod(method: $method, throw: false);
             $name = $method->getName();
             // Filter out all magic methods (names starting with '__')
             if ($method->isConstructor() || str_starts_with($name, '__')) {
@@ -207,7 +211,22 @@ class MakeCachedServiceService
             }
             $params = [];
             $args = [];
-            foreach ($method->getParameters() as $param) {
+
+            $parameters = $method->getParameters();
+
+            if ($mlcCacheableMethodAttribute?->getBulkConfig() !== null) {
+                if (count($parameters) === 0) {
+                    throw new RuntimeException("Method {$method->getName()} is configured as bulk method but has no parameters. Bulk methods must have at least one parameter of type string[] to work with CSG.");
+                }
+                if (!$parameters[0]->hasType() || $parameters[0]->getType()->__toString() !== 'array') {
+                    throw new RuntimeException("Method {$method->getName()} is configured as bulk method but the first parameter does not have type string[]. Found type " . ($parameters[0]->hasType() ? $parameters[0]->getType()->__toString() : 'none') . ".");
+                }
+                if ($method->getReturnType() === null || $method->getReturnType()->__toString() !== 'array') {
+                    throw new RuntimeException("Method {$method->getName()} is configured as bulk method but does not have return type array. Found type " . ($method->getReturnType() ? $method->getReturnType()->__toString() : 'none') . ".");
+                }
+            }
+
+            foreach ($parameters as $param) {
                 $paramStr = '';
 
                 if ($param->hasType()) {
@@ -271,18 +290,14 @@ class MakeCachedServiceService
 
             $isCached = false;
             $cacheTtl = 0;
-            foreach ($method->getAttributes() as $attr) {
-                if ($attr->getName() === MlcCacheableMethod::class) {
-                    $attributeObject = $attr->newInstance();
-                    $isCached = true;
-                    $cacheTtl = $attributeObject->getTtlSeconds() ?? 0;
-                    $methodDoc = PhpDocManipulatorService::add(
-                        docComment: $methodDocOriginal,
-                        linesToAdd: "cache-ttl should be {$cacheTtl} seconds. Check Attribute in {$serviceClass} for details.",
-                        position: 'description',
-                    );
-                    break;
-                }
+            if ($mlcCacheableMethodAttribute !== null) {
+                $isCached = true;
+                $cacheTtl = $mlcCacheableMethodAttribute->getTtlSeconds();
+                $methodDoc = PhpDocManipulatorService::add(
+                    docComment: $methodDocOriginal,
+                    linesToAdd: "cache-ttl should be {$cacheTtl} seconds. Check Attribute in {$serviceClass} for details.",
+                    position: 'description',
+                );
             }
 
             if ($isCached && !$isVoid) {
@@ -306,6 +321,7 @@ class MakeCachedServiceService
                 'MethodArgumentsArray' => implode(', ', $args),
                 'IsStaticBoolean' => $method->isStatic() ? 'true' : 'false',
                 'MethodReturnStatement' => $returnTypeStr !== 'void' ? 'return ' : '',
+                'CallCachedMethod' => $mlcCacheableMethodAttribute?->getBulkConfig() === null ? 'callCachedMethod' : 'callCachedBulkMethod',
             ]);
 
             $interfaceSignatures[] = RenderTemplateService::render('Interface/Signature', [

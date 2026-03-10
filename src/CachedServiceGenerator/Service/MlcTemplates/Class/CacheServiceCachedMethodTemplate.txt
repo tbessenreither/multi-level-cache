@@ -1,7 +1,7 @@
 /*{MethodDocumentation}*/
     public function /*{MethodName}*//*{MethodNamePostfix}*/(/*{MethodArguments}*/): /*{MethodReturnType}*/
     {
-        return $this->callCachedMethod(
+        return $this->/*{CallCachedMethod}*/(
             name: '/*{MethodName}*/',
             args: [/*{MethodArgumentsArray}*/],
             isStatic: /*{IsStaticBoolean}*/
