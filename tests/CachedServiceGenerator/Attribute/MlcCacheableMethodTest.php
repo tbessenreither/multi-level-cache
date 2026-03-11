@@ -22,6 +22,8 @@ class MlcCacheableMethodTest extends TestCase
         $cacheableMethod = new MlcCacheableMethod(3600, );
         $this->assertSame(3600, $cacheableMethod->getTtlSeconds());
         $this->assertNull($cacheableMethod->getDataVersion());
+        $this->assertNull($cacheableMethod->getBulkConfig());
+        $this->assertNull($cacheableMethod->getAdditionalCacheKeyGetter());
 
         $cacheableMethodWithVersion = new MlcCacheableMethod(3600, 'v1');
         $this->assertSame(3600, $cacheableMethodWithVersion->getTtlSeconds());
@@ -45,6 +47,11 @@ class MlcCacheableMethodTest extends TestCase
         $this->assertSame(3600, $cacheableMEthodWithBulkConfig->getTtlSeconds());
         $this->assertInstanceOf(BulkConfig::class, $cacheableMEthodWithBulkConfig->getBulkConfig());
         $this->assertSame($bulkConfig, $cacheableMEthodWithBulkConfig->getBulkConfig());
+
+
+        $cacheableMethod = new MlcCacheableMethod(ttlSeconds: 3600, additionalCacheKeyGetter: 'getAdditionalCacheKey');
+        $this->assertSame('getAdditionalCacheKey', $cacheableMethod->getAdditionalCacheKeyGetter());
+        $this->assertNull($cacheableMethod->getDataVersion());
     }
 
     public function testInvalidTtlNegative(): void

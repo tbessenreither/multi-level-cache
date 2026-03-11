@@ -21,6 +21,12 @@ class MlcCacheableServiceTest extends TestCase
 {
     public function testSetupAndGetter(): void
     {
+        $cacheableServiceEmpty = new MlcCacheableService();
+        $this->assertNull($cacheableServiceEmpty->getAdditionalInterface());
+        $this->assertNull($cacheableServiceEmpty->getDataVersion());
+        $this->assertSame(CacheTypeEnum::DEFAULT, $cacheableServiceEmpty->getCacheType());
+        $this->assertSame(MlcCacheableService::DEFAULT_MAX_SIZE_IN_MEMORY_CACHE, $cacheableServiceEmpty->getInMemoryCacheMaxSize());
+        $this->assertNull($cacheableServiceEmpty->getAdditionalCacheKeyGetter());
 
         $cacheableService1 = new MlcCacheableService(
             additionalInterface: 'App\\Interface\\MyAdditionalInterface',
@@ -43,6 +49,12 @@ class MlcCacheableServiceTest extends TestCase
         $this->assertSame('v2', $cacheableService2->getDataVersion());
         $this->assertSame(CacheTypeEnum::DEFAULT, $cacheableService2->getCacheType());
         $this->assertSame(123, $cacheableService2->getInMemoryCacheMaxSize());
+
+
+        $cacheableService3 = new MlcCacheableService(
+            additionalCacheKeyGetter: 'getAdditionalCacheKey',
+        );
+        $this->assertSame('getAdditionalCacheKey', $cacheableService3->getAdditionalCacheKeyGetter());
     }
 
     public function testFromReflectionClassWithoutAttribute(): void

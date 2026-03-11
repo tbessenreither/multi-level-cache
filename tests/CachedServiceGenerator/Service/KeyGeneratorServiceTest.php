@@ -128,6 +128,21 @@ class KeyGeneratorServiceTest extends TestCase
 
     }
 
+    public function testKeyGeneratorPrefixCache(): void
+    {
+        $methodCallObject = new MethodCallObject(
+            class: TestServiceA::class,
+            method: 'testMethod',
+            arguments: []
+        );
+
+        // Call getKey twice and check that the cache is used
+        $key1 = KeyGeneratorService::getKey($methodCallObject);
+        $key2 = KeyGeneratorService::getKey($methodCallObject);
+
+        $this->assertEquals($key1, $key2);
+    }
+
     public function testDefaultKeyGeneratorMissingPrefix(): void
     {
         $this->expectException(InvalidArgumentException::class);
@@ -139,5 +154,35 @@ class KeyGeneratorServiceTest extends TestCase
 
         $keyPattern = KeyGeneratorService::defaultKeyGenerator($methodCallObject);
 
+    }
+
+    public function testAdditionalCacheKeyBehaviour(): void
+    {
+        $methodCallObject1 = new MethodCallObject(
+            class: TestServiceA::class,
+            method: 'testMethod',
+            arguments: [],
+        );
+
+        $methodCallObject2 = new MethodCallObject(
+            class: TestServiceA::class,
+            method: 'testMethod',
+            arguments: [],
+            additionalCacheKey: 'customKey',
+        );
+
+        $methodCallObject3 = new MethodCallObject(
+            class: TestServiceA::class,
+            method: 'testMethod',
+            arguments: [],
+            additionalCacheKey: 'customKey2',
+        );
+
+        $key1 = KeyGeneratorService::getKey($methodCallObject1);
+        $key2 = KeyGeneratorService::getKey($methodCallObject2);
+        $key3 = KeyGeneratorService::getKey($methodCallObject3);
+        $this->assertNotEquals($key1, $key2);
+        $this->assertNotEquals($key1, $key3);
+        $this->assertNotEquals($key2, $key3);
     }
 }

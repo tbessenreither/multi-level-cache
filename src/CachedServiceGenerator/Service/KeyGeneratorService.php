@@ -51,6 +51,16 @@ class KeyGeneratorService
 
     public static function defaultKeyGenerator(MethodCallObject $methodCallObject): string
     {
+        return implode(':', [
+            self::getCacheKeyPrefix($methodCallObject),
+            $methodCallObject->getMethod(),
+            'DataVersion_' . self::getDataVersion($methodCallObject),
+            self::getCacheKeyFingerprint($methodCallObject),
+        ]);
+    }
+
+    private static function getCacheKeyPrefix(MethodCallObject $methodCallObject): string
+    {
         if (!isset(self::$cacheKeyPrefixCache[$methodCallObject->getClass()])) {
             $cachedClassString = $methodCallObject->getClass() . 'Cached';
             $cachedServiceReflection = new ReflectionClass($cachedClassString);
@@ -63,9 +73,17 @@ class KeyGeneratorService
             $cacheKeyPrefix = self::$cacheKeyPrefixCache[$methodCallObject->getClass()];
         }
 
-        $dataVersion = self::getDataVersion($methodCallObject);
+        return $cacheKeyPrefix;
+    }
 
-        return $cacheKeyPrefix . ':' . $methodCallObject->getMethod() . ':DataVersion_' . $dataVersion . ':' . sha1(serialize($methodCallObject->getArguments()));
+    private static function getCacheKeyFingerprint(MethodCallObject $methodCallObject): string
+    {
+        $fingerprintString = sha1(serialize($methodCallObject->getArguments()));
+        if (!$methodCallObject->getAdditionalCacheKey()) {
+            return $fingerprintString;
+        } else {
+            return $fingerprintString . '_' . $methodCallObject->getAdditionalCacheKey();
+        }
     }
 
     private static function getDataVersion(MethodCallObject $methodCallObject): string

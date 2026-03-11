@@ -23,17 +23,20 @@ class MethodCallObjectTest extends TestCase
         $this->assertSame('myMethod', $methodCallObject1->getMethod());
         $this->assertSame(['arg1', 123], $methodCallObject1->getArguments());
         $this->assertSame('App\\Service\\MyService:myMethod', $methodCallObject1->getCacheGeneratorCacheKey());
+        $this->assertNull($methodCallObject1->getAdditionalCacheKey());
 
         $methodCallObject2 = new MethodCallObject(
             class: 'App\\Service\\AnotherService',
             method: 'anotherMethod',
             arguments: [],
+            additionalCacheKey: 'customKey',
         );
 
         $this->assertSame('App\\Service\\AnotherService', $methodCallObject2->getClass());
         $this->assertSame('anotherMethod', $methodCallObject2->getMethod());
         $this->assertSame([], $methodCallObject2->getArguments());
         $this->assertSame('App\\Service\\AnotherService:anotherMethod', $methodCallObject2->getCacheGeneratorCacheKey());
+        $this->assertSame('customKey', $methodCallObject2->getAdditionalCacheKey());
     }
 
     public function testClone(): void

@@ -384,11 +384,13 @@ class MultiLevelCacheServiceTest extends TestCase
         );
 
         $sourceWasCalled = false;
+        $entriesRequestedFromSource = [];
 
         $results = $service->getBulk(
             keys: $keys,
-            callable: function (array $keys) use (&$sourceWasCalled) {
+            callable: function (array $keys) use (&$sourceWasCalled, &$entriesRequestedFromSource) {
                 $sourceWasCalled = true;
+                $entriesRequestedFromSource = $keys;
                 $values = [];
                 foreach ($keys as $key) {
                     $values[] = [
@@ -410,6 +412,7 @@ class MultiLevelCacheServiceTest extends TestCase
         );
 
         $this->assertTrue($sourceWasCalled, 'The source callable should have been called since bulk is not configured');
+        $this->assertEquals(['key1', 'key3'], $entriesRequestedFromSource, 'The keys requested from the source should match the original keys');
         $expectedResults = [];
         foreach ($keys as $key) {
             $expectedResults[$key] = [
