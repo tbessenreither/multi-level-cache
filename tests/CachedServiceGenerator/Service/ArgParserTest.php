@@ -20,6 +20,12 @@ class ArgParserTest extends TestCase
         $this->assertSame($expectedResult, $result);
     }
 
+    public function testParserReturn(): void
+    {
+        $result = ArgParser::parse();
+        $this->assertIsArray($result);
+    }
+
 
     public static function provideArgvArrays(): Generator
     {

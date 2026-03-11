@@ -7,15 +7,31 @@ namespace Tbessenreither\MultiLevelCache\Tests\CachedServiceGenerator\Service;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\FileOperationService;
-use Tbessenreither\MultiLevelCache\Tests\CachedServiceGenerator\Service\FileOperationServiceClasses\TargetClass;
+use Tbessenreither\MultiLevelCache\Tests\TestFiles\FileOperationServiceClasses\Other\TargetClass as TargetClassOther;
+use Tbessenreither\MultiLevelCache\Tests\TestFiles\FileOperationServiceClasses\Resource\TargetClass as TargetClassResource;
+use Tbessenreither\MultiLevelCache\Tests\TestFiles\FileOperationServiceClasses\Service\TargetClass as TargetClassService;
 
 #[CoversClass(FileOperationService::class)]
 class FileOperationServiceTest extends TestCase
 {
-    private string $newCachedFilePath = __DIR__ . '/FileOperationServiceClasses/TargetClassCached.php';
-    private string $newCopiedFilePath = __DIR__ . '/FileOperationServiceClasses/TargetClassCopy.php';
-    private string $originalClass = TargetClass::class;
-    private string $newClass = TargetClass::class . 'Cached';
+    private string $newCachedFilePath;
+    private string $newCopiedFilePath;
+    private string $originalClass = TargetClassService::class;
+    private string $newClass = TargetClassService::class . 'Cached';
+
+    private string $projectRootPath;
+    private string $testFilesRootPath;
+
+    public function __construct(string $name)
+    {
+        parent::__construct($name);
+
+        $this->projectRootPath = realpath(__DIR__ . '/../../..');
+        $this->testFilesRootPath = $this->projectRootPath . '/tests/TestFiles/FileOperationServiceClasses';
+
+        $this->newCachedFilePath = $this->testFilesRootPath . '/Service/TargetClassCached.php';
+        $this->newCopiedFilePath = $this->testFilesRootPath . '/Service/TargetClassCopy.php';
+    }
 
     public function setUp(): void
     {
@@ -28,7 +44,7 @@ class FileOperationServiceTest extends TestCase
             unlink($this->newCopiedFilePath);
         }
 
-        $fileContent = file_get_contents(__DIR__ . '/FileOperationServiceClasses/TargetClass.php');
+        $fileContent = file_get_contents($this->testFilesRootPath . '/Service/TargetClass.php');
         $fileContent = str_replace('TargetClass', 'TargetClassCopy', $fileContent);
         file_put_contents($this->newCopiedFilePath, $fileContent);
 
@@ -60,7 +76,7 @@ class FileOperationServiceTest extends TestCase
     public function testAddInterfaceToClass(): void
     {
         FileOperationService::addInterfaceToClass(
-            class: 'Tbessenreither\MultiLevelCache\Tests\CachedServiceGenerator\Service\FileOperationServiceClasses\TargetClassCopy',
+            class: 'Tbessenreither\MultiLevelCache\Tests\TestFiles\FileOperationServiceClasses\Service\TargetClassCopy',
             interface: 'Some\Namespace\TestInterface',
         );
 
@@ -70,6 +86,26 @@ class FileOperationServiceTest extends TestCase
         $this->assertStringContainsString('implements TestInterface', $code);
 
         $this->checkFileSyntax($this->newCopiedFilePath);
+    }
+
+    public function testFindRootForClassInResource(): void
+    {
+        $result = FileOperationService::findRootForClass(TargetClassResource::class);
+        $expected = [
+            'namespace' => 'Tbessenreither\\MultiLevelCache\\Tests\\TestFiles\\FileOperationServiceClasses\\Resource\\',
+            'path' => $this->testFilesRootPath . '/Resource/',
+        ];
+        $this->assertEquals($result, $expected);
+    }
+
+    public function testFindRootForClassInOther(): void
+    {
+        $result = FileOperationService::findRootForClass(TargetClassOther::class);
+        $expected = [
+            'namespace' => 'Tbessenreither\\MultiLevelCache\\Tests\\',
+            'path' => $this->projectRootPath . '/tests/',
+        ];
+        $this->assertEquals($result, $expected);
     }
 
     private function checkFileSyntax(string $file): void

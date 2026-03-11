@@ -1,0 +1,14 @@
+{
+    "name": "tbessenreither/randomproject",
+    "description": "just a random project.",
+    "autoload": {
+        "psr-4": {
+            "Tbessenreither\\MultiLevelCache\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tbessenreither\\MultiLevelCache\\Tests\\": "tests/"
+        }
+    }
+}

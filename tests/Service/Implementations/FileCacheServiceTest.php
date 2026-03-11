@@ -142,8 +142,6 @@ class FileCacheServiceTest extends TestCase
         $dto = $this->createMock(CacheObjectWrapperDto::class);
         $dto->method('isExpired')->willReturn(true);
 
-
-
         $fileCacheService = new FileCacheService(
             kernel: $this->getKernelMockWithCacheDir($this->cacheDir),
             keyPrefix: '',
@@ -152,8 +150,9 @@ class FileCacheServiceTest extends TestCase
 
         $this->fileCacheService->set($key, $dto);
         $this->assertNotEmpty($fileCacheService->getCachedKeys());
-
+        usleep(1000);
         $this->assertNull($this->fileCacheService->get($key));
+        usleep(1000);
         $this->assertEmpty($fileCacheService->getCachedKeys());
     }
 

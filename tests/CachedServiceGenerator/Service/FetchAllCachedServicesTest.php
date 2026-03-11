@@ -7,6 +7,7 @@ namespace Tbessenreither\MultiLevelCache\Tests\CachedServiceGenerator\Service;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use RuntimeException;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachedService;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\FetchAllCachedServices;
@@ -54,5 +55,103 @@ class FetchAllCachedServicesTest extends TestCase
         foreach ($services as $service) {
             break;
         }
+    }
+
+    public function testGetSrcDirByVendorMaxIterationsExceeded(): void
+    {
+        $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingVendorWithSrc';
+        $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcDirByVendor');
+        $method->setAccessible(true);
+        $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5/6/7/8/9', 5);
+        $this->assertFalse($src);
+    }
+
+    public function testGetSrcDirByVendorSibling(): void
+    {
+        $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingVendorWithSrc';
+        $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcDirByVendor');
+        $method->setAccessible(true);
+        $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
+
+        $this->assertSame($sourceDir . '/src', $src);
+    }
+
+    public function testGetSrcDirByVendorSiblingWithoutSrc(): void
+    {
+        $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingVendorWithoutSrc';
+        $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcDirByVendor');
+        $method->setAccessible(true);
+        $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
+
+        $this->assertFalse($src);
+    }
+
+    public function testGetSrcDirByVendorWithinSrc(): void
+    {
+        $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingVendorWithSrc';
+        $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcDirByVendor');
+        $method->setAccessible(true);
+        $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
+
+        $this->assertSame($sourceDir . '/src', $src);
+    }
+
+    public function testGetSrcDirByComposerJsonMaxIterationsExceeded(): void
+    {
+        $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingComposerWithSrc';
+        $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcByComposerJson');
+        $method->setAccessible(true);
+        $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5/6/7/8/9', 5);
+        $this->assertFalse($src);
+    }
+
+    public function testGetSrcDirByComposerJsonWithSrc(): void
+    {
+        $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingComposerWithSrc';
+        $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcByComposerJson');
+        $method->setAccessible(true);
+        $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
+
+        $this->assertSame($sourceDir . '/src', $src);
+    }
+
+    public function testGetSrcDirByComposerJsonWithoutSrc(): void
+    {
+        $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingComposerWithoutSrc';
+        $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcByComposerJson');
+        $method->setAccessible(true);
+        $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
+
+        $this->assertFalse($src);
+    }
+
+    public function testGetSrcDirSucceedingComposer(): void
+    {
+        $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingComposerWithSrc';
+        $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcDir');
+        $method->setAccessible(true);
+        $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
+
+        $this->assertSame($sourceDir . '/src', $src);
+    }
+
+    public function testGetSrcDirSucceedingVendor(): void
+    {
+        $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingVendorWithSrc';
+        $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcDir');
+        $method->setAccessible(true);
+        $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
+
+        $this->assertSame($sourceDir . '/src', $src);
+    }
+
+    public function testGetSrcDirFailing(): void
+    {
+        $this->expectException(RuntimeException::class);
+
+        $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingVendorWithoutSrc';
+        $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcDir');
+        $method->setAccessible(true);
+        $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
     }
 }

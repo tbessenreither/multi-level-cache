@@ -93,14 +93,14 @@ class FetchAllCachedServices
         }
     }
 
-    private static function getSrcDir(): string
+    private static function getSrcDir(string $startDir = __DIR__): string
     {
-        $srcDir = self::getSrcByComposerJson();
+        $srcDir = self::getSrcByComposerJson($startDir);
         if ($srcDir !== false) {
             return $srcDir;
         }
 
-        $srcDir = self::getSrcDirByVendor();
+        $srcDir = self::getSrcDirByVendor($startDir);
         if ($srcDir !== false) {
             return $srcDir;
         }
@@ -108,42 +108,46 @@ class FetchAllCachedServices
         throw new RuntimeException("Could not determine source directory. Please provide it explicitly.");
     }
 
-    private static function getSrcDirByVendor(): false|string
+    private static function getSrcDirByVendor(string $startDir = __DIR__, int $maxIterations = self::MAX_DIR_ITERATIONS): false|string
     {
-        $currentDir = dirname(__DIR__);
-        $iterations = 0;
+        try {
+            $currentDir = dirname($startDir);
+            $iterations = 0;
 
-        // Traverse up until we find the "vendor" directory either as the current directory or in the parent directory as a sibling (When ran in Unit Tests).
-        while (basename($currentDir) !== 'vendor' && !file_exists($currentDir . '/../vendor') && mb_strlen($currentDir) > 1) {
-            $iterations++;
-            if ($iterations > self::MAX_DIR_ITERATIONS) {
-                throw new RuntimeException("Could not find 'vendor' directory after " . self::MAX_DIR_ITERATIONS . " iterations. Aborting.");
+            // Traverse up until we find the "vendor" directory either as the current directory or in the parent directory as a sibling (When ran in Unit Tests).
+            while (basename($currentDir) !== 'vendor' && !file_exists($currentDir . '/../vendor') && mb_strlen($currentDir) > 1) {
+                $iterations++;
+                if ($iterations > $maxIterations) {
+                    throw new RuntimeException("Could not find 'vendor' directory after " . $maxIterations . " iterations. Aborting.");
+                }
+
+                $currentDir = dirname($currentDir);
             }
 
+            // Now go up one more level to get to the root of the project
             $currentDir = dirname($currentDir);
-        }
 
-        // Now go up one more level to get to the root of the project
-        $currentDir = dirname($currentDir);
+            $sourceDir = $currentDir . '/src';
 
-        $sourceDir = $currentDir . '/src';
-
-        if (!is_dir($sourceDir)) {
+            if (!is_dir($sourceDir)) {
+                throw new RuntimeException("src directory not found in '$currentDir'.");
+            }
+        } catch (Throwable) {
             return false;
         }
 
         return $sourceDir;
     }
 
-    private static function getSrcByComposerJson(): false|string
+    private static function getSrcByComposerJson(string $startDir = __DIR__, int $maxIterations = self::MAX_DIR_ITERATIONS): false|string
     {
         try {
-            $currentDir = dirname(__DIR__);
+            $currentDir = dirname($startDir);
             $iterations = 0;
             do {
                 $iterations++;
-                if ($iterations > self::MAX_DIR_ITERATIONS) {
-                    throw new RuntimeException("Could not find composer.json after " . self::MAX_DIR_ITERATIONS . " iterations. Aborting.");
+                if ($iterations > $maxIterations) {
+                    throw new RuntimeException("Could not find composer.json after " . $maxIterations . " iterations. Aborting.");
                 }
 
                 $nextPath = dirname($currentDir);
