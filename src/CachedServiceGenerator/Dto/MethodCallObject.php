@@ -10,6 +10,7 @@ class MethodCallObject
         private string $class,
         private string $method,
         private array $arguments,
+        private ?string $additionalCacheKey = null,
     ) {
     }
 
@@ -33,12 +34,18 @@ class MethodCallObject
         return $this->class . ':' . $this->method;
     }
 
-    public function clone(?string $class = null, ?string $method = null, ?array $arguments = null): self
+    public function getAdditionalCacheKey(): ?string
+    {
+        return $this->additionalCacheKey;
+    }
+
+    public function clone(?string $class = null, ?string $method = null, ?array $arguments = null, ?string $additionalCacheKey = null): self
     {
         return new self(
             class: $class ?? $this->class,
             method: $method ?? $this->method,
             arguments: $arguments ?? $this->arguments,
+            additionalCacheKey: $additionalCacheKey ?? $this->additionalCacheKey,
         );
     }
 }

@@ -101,15 +101,55 @@ They also give you control over how the cache is set up and behaves. Let's go ov
 
 ### MlcCacheableMethod
 
-You already know this one and it's required `ttlSeconds` parameter. But there is a second optional parameter called `dataVersion`.
+You already know this one and it's required `ttlSeconds` parameter. But there is also:
+- `dataVersion`,
+- `bulkConfig`, and
+- `additionalCacheKeyGetter`
 
+#### dataVersion
 `dataVersion` is a string that is added to the cache key and represents the version number of the returned data.
 
 As the MLC allows you to share, for example, the Redis Cache between different Services, you might have different versions of a package deployed at one time. This can happen during a rollout or based on dependencies. To prevent the different versions of your service poisoning each others cache, you can separate them out by using the `dataVersion` parameter. Whenever you make a breaking change to your returned data, you should update the `dataVersion`. This way the two caches can just co-exist until all services are updated and the old cache entries are decayed.
 
 Note: the invalidator will delete all dataVersions of a given service and or method. So you don't need to run it on every version.
 
-#### Bulk Requests
+
+#### additionalCacheKeyGetter
+
+If your Method is dependent on lets say a mandator or an API-Domain the cache Key can not be generated based on the arguments of the method alone.
+To tell the MLC that there is more to this you can set this attribute with a string of the name of a method in the class that returns all additional content your class depends on.
+
+The only requirement is that it can be passed through `serialize()`.
+
+This will make the MLC aware of your context and prevent key colissions.
+
+Usage example:
+```php
+class TestService implements TestServiceInterface
+{
+    private string $mandator = 'defaultMandator';
+
+    #[MlcCacheableMethod(
+        ttlSeconds: 600,
+		additionalCacheKeyGetter: 'getAdditionalCacheKeys',
+    )]
+    public function doThings(string $input): string
+    {
+        return strrev($input);
+    }
+
+    public function getAdditionalCacheKeys(): array
+    {
+        return [
+            'leMandator' => $this->mandator,
+        ];
+    }
+}
+```
+
+
+#### bulkConfig
+See [Bulk Requests](#bulk-requests)
 
 Sometimes you have a method that accepts an array of ids that you want to fetch in a more performant way. Maybe by a bulk SQL query or via parallel CURL requests or other methods. Those requests are very inefficient to cache with just one entry because every change in the list will create a new cache key and therefore a separate entry in the cache.
 This means:
@@ -264,3 +304,32 @@ You can look at the [MLC](mlc-service-and-factory.md) documentation for more det
 By default the in memory cache has a max size of 100 entries. This argument allows you to modify this maximum.
 
 This can be helpfull depending on your memory constraints or use case. Use as you see fit.
+
+#### additionalCacheKeyGetter
+The same as the Method version [see here](#additionalcachekeygetter) but it is applied to all cached methods.
+
+Usage example:
+```php
+#[MlcCacheableService(
+		additionalCacheKeyGetter: 'getAdditionalCacheKeys',
+)]
+class TestService implements TestServiceInterface
+{
+    private string $mandator = 'defaultMandator';
+
+    #[MlcCacheableMethod(
+        ttlSeconds: 600,
+    )]
+    public function doThings(string $input): string
+    {
+        return strrev($input);
+    }
+
+    public function getAdditionalCacheKeys(): array
+    {
+        return [
+            'leMandator' => $this->mandator,
+        ];
+    }
+}
+```

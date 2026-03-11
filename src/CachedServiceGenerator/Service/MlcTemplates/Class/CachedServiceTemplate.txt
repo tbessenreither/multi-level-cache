@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace /*{ServiceNamespace}*/;
 
+use ReflectionClass;
+use ReflectionMethod;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableMethod;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableService;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCachedService;
@@ -11,8 +13,8 @@ use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\KeyGeneratorService;
 use Tbessenreither\MultiLevelCache\Factory\MultiLevelCacheFactory;
 use Tbessenreither\MultiLevelCache\Service\MultiLevelCacheService;
-use ReflectionClass;
-use ReflectionMethod;
+use RuntimeException;
+use Throwable;
 /**
  * Dynamically added use statements
  */
@@ -36,16 +38,14 @@ use ReflectionMethod;
 class /*{ServiceName}*/Cached implements /*{InterfacesString}*/
 {
     public const CACHE_KEY_PREFIX = 'CachedService:/*{ClassUnderscoreSeparated}*/';
+
     /**
-     * @var int[]
+     * @var array<string, MlcCacheableMethod|null>
      */
-    private array $ttlPerMethod = [];
-    /**
-     * @var ReflectionMethod[]
-     */
-    private array $reflectionMethodCache = [];
+    private array $mlcCacheableMethodAttributeCache = [];
     private MultiLevelCacheService $cache;
-    private int $defaultTtlSeconds = /*{DefaultTtlSeconds}*/;
+    private ReflectionClass $originalClassReflection;
+    private MlcCacheableService $mlcCacheableServiceAttribute;
 
     public function __construct(
         MultiLevelCacheFactory $multiLevelCacheFactory,
@@ -53,11 +53,14 @@ class /*{ServiceName}*/Cached implements /*{InterfacesString}*/
     ) {
         $cacheGroupName = 'CachedService-/*{ClassUnderscoreSeparated}*/';
 
+        $this->originalClassReflection = new ReflectionClass($instance);
+        $this->mlcCacheableServiceAttribute = MlcCacheableService::fromReflectionClass($this->originalClassReflection);
+
         $mlcCacheableServiceAttribute = MlcCacheableService::fromReflectionClass(new ReflectionClass($instance));
 
         $this->cache = $multiLevelCacheFactory->createByType(
-            type: $mlcCacheableServiceAttribute->getCacheType(),
-            inMemoryCacheMaxSize: $mlcCacheableServiceAttribute->getInMemoryCacheMaxSize(),
+            type: $this->mlcCacheableServiceAttribute->getCacheType(),
+            inMemoryCacheMaxSize: $this->mlcCacheableServiceAttribute->getInMemoryCacheMaxSize(),
             writeL0OnSet: true,
             cacheGroupName: $cacheGroupName,
         );
@@ -71,31 +74,33 @@ class /*{ServiceName}*/Cached implements /*{InterfacesString}*/
 
     private function callCachedMethod(string $name, array $args, bool $isStatic): mixed
     {
-        $ttl = $this->getTtlForMethod($name);
-
-        if ($ttl === 0) {
-            return $this->instance->$name(...$args);
-        }
-
         return $this->cache->get(
-            key: KeyGeneratorService::getKey(new MethodCallObject($this->instance::class, $name, $args)),
+            key: KeyGeneratorService::getKey(new MethodCallObject(
+                class: $this->instance::class,
+                method: $name,
+                arguments: $args,
+                additionalCacheKey: $this->getAdditionalCacheKey($name),
+            )),
             callable: fn () => $this->callSource($name, $args, $isStatic),
-            ttlSeconds: $this->getTtlForMethod($name),
+            ttlSeconds: $this->getMlcCacheableMethodAttribute($name)->getTtlSeconds(),
         );
     }
 
     private function callCachedBulkMethod(string $name, array $args, bool $isStatic): array
     {
-        $ttl = $this->getTtlForMethod($name);
-
-        if ($ttl === 0) {
-            return $this->instance->$name(...$args);
-        }
-
         return $this->cache->getBulk(
             keys: $args[0],
-            callable: fn () => $this->callSource($name, $args, $isStatic),
-            methodCallObject: new MethodCallObject($this->instance::class, $name, $args),
+            callable:  function ($keysToFetch) use ($name, $args, $isStatic) {
+                $argsCopy = $args;
+                $argsCopy[0] = $keysToFetch;
+                return $this->callSource($name, $argsCopy, $isStatic);
+            },
+            methodCallObject: new MethodCallObject(
+                class: $this->instance::class,
+                method: $name,
+                arguments: $args,
+                additionalCacheKey: $this->getAdditionalCacheKey($name),
+            ),
             mlcCacheableMethodAttribute: $this->getMlcCacheableMethodAttribute($name),
         );
     }
@@ -109,36 +114,30 @@ class /*{ServiceName}*/Cached implements /*{InterfacesString}*/
         return $this->instance->$name(...$args);
     }
 
-    private function getMethodReflection(string $methodName): ReflectionMethod
-    {
-        if (!array_key_exists($methodName, $this->reflectionMethodCache)) {
-            $this->reflectionMethodCache[$methodName] = new ReflectionMethod($this->instance, $methodName);
-        }
-
-        return $this->reflectionMethodCache[$methodName];
-    }
-
     private function getMlcCacheableMethodAttribute(string $methodName): ?MlcCacheableMethod
     {
-        $reflectionMethod = $this->getMethodReflection($methodName);
+        if (!array_key_exists($methodName, $this->mlcCacheableMethodAttributeCache)) {
+            $reflectionMethod = new ReflectionMethod($this->instance, $methodName);
+            $this->mlcCacheableMethodAttributeCache[$methodName] = MlcCacheableMethod::fromReflectionMethod($reflectionMethod, false);
+        }
 
-        return MlcCacheableMethod::fromReflectionMethod($reflectionMethod, false);
+        return $this->mlcCacheableMethodAttributeCache[$methodName];
     }
 
-    private function getTtlForMethod(string $method): int
+    private function getAdditionalCacheKey(string $methodName): ?string
     {
-        if (array_key_exists($method, $this->ttlPerMethod)) {
-            return $this->ttlPerMethod[$method];
+        $additionalIdGetter = $this->getMlcCacheableMethodAttribute($methodName)->getAdditionalCacheKeyGetter() ?? $this->mlcCacheableServiceAttribute->getAdditionalCacheKeyGetter();
+
+        if (!$additionalIdGetter) {
+            return null;
         }
 
-        $mlcCacheableMethod = $this->getMlcCacheableMethodAttribute($method);
-
-        if ($mlcCacheableMethod === null) {
-            $this->ttlPerMethod[$method] = $this->defaultTtlSeconds;
-        } else {
-            $this->ttlPerMethod[$method] = $mlcCacheableMethod->getTtlSeconds();
+        try {
+            $getterResponse = $this->instance->{$additionalIdGetter}();
+            return sha1(serialize($getterResponse));
+        } catch (Throwable $e) {
+            throw new RuntimeException(sprintf('An error occurred while calling the additional cache ID getter "%s": %s', $additionalIdGetter, $e->getMessage()), previous: $e);
         }
 
-        return $this->ttlPerMethod[$method];
     }
 }
