@@ -10,6 +10,9 @@ use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheable
 #[MlcCacheableService(dataVersion: 'v0.0.0')]
 class TestServiceA
 {
+    public static bool $sourceWasCalled = false;
+    public static array $entriesRequestedFromSource = [];
+
     public function testMethod(): string
     {
         return 'ok';
@@ -30,5 +33,52 @@ class TestServiceA
     public function cacheableTestMethodWithDataVersion(): string
     {
         return 'ok';
+    }
+
+    public static function bulkTestFunction(array $keys)
+    {
+        self::$sourceWasCalled = true;
+        self::$entriesRequestedFromSource = $keys;
+        $values = [];
+        foreach ($keys as $key) {
+            $values[] = [
+                'key' => $key,
+                'value' => 'value for ' . $key,
+            ];
+        }
+
+        return $values;
+    }
+
+    public static function bulkTestFunctionWithIntIdentifier(array $keys)
+    {
+        self::$sourceWasCalled = true;
+        self::$entriesRequestedFromSource = $keys;
+        $values = [];
+        $i = 1;
+        foreach ($keys as $key) {
+            $values[] = [
+                'key' => $i++,
+                'value' => 'value for ' . $key,
+            ];
+        }
+
+        return $values;
+    }
+
+    public static function bulkTestFunctionWithWrongResponse(array $keys)
+    {
+        $response = [];
+        foreach ($keys as $key) {
+            $response[$key] = 'value for ' . $key;
+        }
+
+        return $response;
+    }
+
+    public static function resetStatic(): void
+    {
+        self::$sourceWasCalled = false;
+        self::$entriesRequestedFromSource = [];
     }
 }

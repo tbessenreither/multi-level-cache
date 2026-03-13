@@ -7,7 +7,7 @@ namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto;
 class MethodCallObject
 {
     public function __construct(
-        private string $class,
+        private object|string $class,
         private string $method,
         private array $arguments,
         private ?string $additionalCacheKey = null,
@@ -16,7 +16,7 @@ class MethodCallObject
 
     public function getClass(): string
     {
-        return $this->class;
+        return is_object($this->class) ? get_class($this->class) : $this->class;
     }
 
     public function getMethod(): string
@@ -37,6 +37,16 @@ class MethodCallObject
     public function getAdditionalCacheKey(): ?string
     {
         return $this->additionalCacheKey;
+    }
+
+    public function getCachePrefix(): string
+    {
+        return str_replace(['\\', ':', ' '], ['_', '-', ''], $this->getClass());
+    }
+
+    public function getCallable(): ?callable
+    {
+        return fn () => call_user_func_array([$this->class, $this->method], $this->arguments);
     }
 
     public function clone(?string $class = null, ?string $method = null, ?array $arguments = null, ?string $additionalCacheKey = null): self

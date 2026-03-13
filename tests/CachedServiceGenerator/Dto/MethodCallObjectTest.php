@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\Tests\CachedServiceGenerator\Attribute;
 
+use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
@@ -24,6 +25,8 @@ class MethodCallObjectTest extends TestCase
         $this->assertSame(['arg1', 123], $methodCallObject1->getArguments());
         $this->assertSame('App\\Service\\MyService:myMethod', $methodCallObject1->getCacheGeneratorCacheKey());
         $this->assertNull($methodCallObject1->getAdditionalCacheKey());
+        $this->assertEquals('App_Service_MyService', $methodCallObject1->getCachePrefix());
+        $this->assertInstanceOf(Closure::class, $methodCallObject1->getCallable());
 
         $methodCallObject2 = new MethodCallObject(
             class: 'App\\Service\\AnotherService',

@@ -61,19 +61,24 @@ class KeyGeneratorService
 
     private static function getCacheKeyPrefix(MethodCallObject $methodCallObject): string
     {
-        if (!isset(self::$cacheKeyPrefixCache[$methodCallObject->getClass()])) {
-            $cachedClassString = $methodCallObject->getClass() . 'Cached';
-            $cachedServiceReflection = new ReflectionClass($cachedClassString);
-            $cacheKeyPrefix = $cachedServiceReflection->getConstant('CACHE_KEY_PREFIX');
-            if ($cacheKeyPrefix === false) {
-                throw new InvalidArgumentException("CACHE_KEY_PREFIX constant not found in class {$cachedClassString}");
-            }
-            self::$cacheKeyPrefixCache[$methodCallObject->getClass()] = $cacheKeyPrefix;
-        } else {
-            $cacheKeyPrefix = self::$cacheKeyPrefixCache[$methodCallObject->getClass()];
-        }
+        try {
 
-        return $cacheKeyPrefix;
+            if (!isset(self::$cacheKeyPrefixCache[$methodCallObject->getClass()])) {
+                $cachedClassString = $methodCallObject->getClass() . 'Cached';
+                $cachedServiceReflection = new ReflectionClass($cachedClassString);
+                $cacheKeyPrefix = $cachedServiceReflection->getConstant('CACHE_KEY_PREFIX');
+                if ($cacheKeyPrefix === false) {
+                    throw new InvalidArgumentException("CACHE_KEY_PREFIX constant not found in class {$cachedClassString}");
+                }
+                self::$cacheKeyPrefixCache[$methodCallObject->getClass()] = $cacheKeyPrefix;
+            } else {
+                $cacheKeyPrefix = self::$cacheKeyPrefixCache[$methodCallObject->getClass()];
+            }
+
+            return $cacheKeyPrefix;
+        } catch (Throwable $e) {
+            return $methodCallObject->getCachePrefix();
+        }
     }
 
     private static function getCacheKeyFingerprint(MethodCallObject $methodCallObject): string

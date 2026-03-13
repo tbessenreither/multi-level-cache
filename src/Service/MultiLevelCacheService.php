@@ -128,15 +128,32 @@ class MultiLevelCacheService
         return $callableResult;
     }
 
-    public function getBulk(array $keys, callable $callable, MethodCallObject $methodCallObject, MlcCacheableMethod $mlcCacheableMethodAttribute): array
-    {
+    /**
+     * @param array $keys This parameter is ignored. replacement is the keys argument of the $methodCallObject argument. since 1.4.0
+     * @param mixed $callable While this parameter can still be used and has priority over the $methodCallObject call we highly recommend replacing it by pointing to a valid method within the $methodCallObject. since 1.4.0
+     * @throws RuntimeException
+     */
+    public function getBulk(
+        MethodCallObject $methodCallObject,
+        MlcCacheableMethod $mlcCacheableMethodAttribute,
+        array $keys = [],
+        mixed $callable = null,
+    ): array {
+        $keys = $methodCallObject->getArguments()[0];
         $stopwatchEventName = 'getBulk()';
         try {
             $this->startStopwatchEvent($stopwatchEventName);
             $this->raiseIssue(WarningEnum::WARNING_EXPERIMENTAL_FEATURE_BULK);
 
             if ($mlcCacheableMethodAttribute->getBulkConfig() === null) {
-                $this->raiseIssue(ErrorEnum::ERROR_BULK_CONFIG_MISSING);
+                $this->raiseIssue(ErrorEnum::ERROR_BULK_CONFIG_MISSING, new DataCollectorIssueOccurrenceDto(
+                    affectedCacheGroup: $this->cacheGroupName,
+                    affectedKeys: $keys,
+                    context: [
+                        'methodCallObject' => $methodCallObject,
+                        'mlcCacheableMethodAttribute' => $mlcCacheableMethodAttribute,
+                    ],
+                ));
 
                 throw new RuntimeException('BulkConfig is required for bulk operations');
             }
@@ -158,9 +175,12 @@ class MultiLevelCacheService
 
             // do one bulk call to source for all non-cached requests and cache them individually
             if (!empty($requestsToSource)) {
+                $sourceArguments = $methodCallObject->getArguments();
+                $sourceArguments[0] = $requestsToSource;
+                $methodCallObjectForSource = $methodCallObject->clone(arguments: $sourceArguments);
                 $responsesFromSource = $this->getFromSource(
                     key: $requestsToSource,
-                    callable: $callable,
+                    callable: $callable ?? $methodCallObjectForSource->getCallable(),
                     ttlSeconds: $mlcCacheableMethodAttribute->getTtlSeconds(),
                 );
 
@@ -192,7 +212,7 @@ class MultiLevelCacheService
 
             $fallbackResult = $this->getFromSource(
                 key: $keys,
-                callable: $callable,
+                callable: $callable ?? $methodCallObject->getCallable(),
                 ttlSeconds: $mlcCacheableMethodAttribute->getTtlSeconds(),
             );
             $this->stopStopwatchEvent($stopwatchEventName);
@@ -468,8 +488,11 @@ class MultiLevelCacheService
         return $this->cacheReadDisabled;
     }
 
-    private function cloneBulkMethodCallObjectWithNewIdentifier(MethodCallObject $methodCallObject, string $newIdentifier): MethodCallObject
+    private function cloneBulkMethodCallObjectWithNewIdentifier(MethodCallObject $methodCallObject, string|int $newIdentifier): MethodCallObject
     {
+        if (is_int($newIdentifier)) {
+            $newIdentifier = (string) $newIdentifier;
+        }
         $arguments = $methodCallObject->getArguments();
         $arguments[0] = $newIdentifier;
 
