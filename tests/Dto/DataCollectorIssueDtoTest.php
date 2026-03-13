@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tbessenreither\MultiLevelCache\Dto\DataCollectorIssueDto;
 use Tbessenreither\MultiLevelCache\Dto\DataCollectorIssueOccurrenceDto;
+use Tbessenreither\MultiLevelCache\Enum\InfoEnum;
 use Tbessenreither\MultiLevelCache\Enum\WarningEnum;
 
 #[CoversClass(DataCollectorIssueDto::class)]
@@ -48,7 +49,7 @@ class DataCollectorIssueDtoTest extends TestCase
 
     public function testFromEnum(): void
     {
-        $enum = WarningEnum::WARNING_STORED_STRING_VALUE;
+        $enum = InfoEnum::STORED_STRING_VALUE;
 
         $object = DataCollectorIssueDto::fromEnum($enum);
 
