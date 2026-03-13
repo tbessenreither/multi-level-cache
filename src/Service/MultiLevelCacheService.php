@@ -215,7 +215,6 @@ class MultiLevelCacheService
                 $responsesFromSource = $this->getFromSource(
                     key: $requestsToSource,
                     callable: $callable ?? $methodCallObjectForSource->getCallable(),
-                    callable: $callable ?? $methodCallObjectForSource->getCallable(),
                     ttlSeconds: $mlcCacheableMethodAttribute->getTtlSeconds(),
                 );
 
@@ -247,7 +246,6 @@ class MultiLevelCacheService
 
             $fallbackResult = $this->getFromSource(
                 key: $keys,
-                callable: $callable ?? $methodCallObject->getCallable(),
                 callable: $callable ?? $methodCallObject->getCallable(),
                 ttlSeconds: $mlcCacheableMethodAttribute->getTtlSeconds(),
             );
@@ -525,14 +523,11 @@ class MultiLevelCacheService
     }
 
     private function cloneBulkMethodCallObjectWithNewIdentifier(MethodCallObject $methodCallObject, string|int $newIdentifier): MethodCallObject
-    private function cloneBulkMethodCallObjectWithNewIdentifier(MethodCallObject $methodCallObject, string|int $newIdentifier): MethodCallObject
     {
         if (is_int($newIdentifier)) {
             $newIdentifier = (string) $newIdentifier;
         }
-        if (is_int($newIdentifier)) {
-            $newIdentifier = (string) $newIdentifier;
-        }
+
         $arguments = $methodCallObject->getArguments();
         $arguments[0] = $newIdentifier;
 
