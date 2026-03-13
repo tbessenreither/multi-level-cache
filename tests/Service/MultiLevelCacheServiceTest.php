@@ -353,7 +353,7 @@ class MultiLevelCacheServiceTest extends TestCase
         }, 100);
     }
 
-    public function testGetBulkConfigured(): void
+    public function testGetBulkConfiguredBackwardsCompatibility(): void
     {
         $keys = ['key1', 'key2', 'key3'];
         $expectedResults = [];
@@ -363,10 +363,10 @@ class MultiLevelCacheServiceTest extends TestCase
                 'value' => 'value for ' . $key,
             ];
         }
-
+        TestServiceA::resetStatic();
         $methodCallObject = new MethodCallObject(
             class: TestServiceA::class,
-            method: 'testMethod',
+            method: 'bulkTestFunction',
             arguments: [$keys],
         );
 
@@ -422,8 +422,114 @@ class MultiLevelCacheServiceTest extends TestCase
             ),
         );
 
-        $this->assertTrue($sourceWasCalled, 'The source callable should have been called since bulk is not configured');
+        $this->assertFalse(TestServiceA::$sourceWasCalled, 'As we have a real callable, the method call object should have been ignored');
+        $this->assertTrue($sourceWasCalled, 'The source callable should have been called as it has priority due to bc.');
+
         $this->assertEquals(['key1', 'key3'], $entriesRequestedFromSource, 'The keys requested from the source should match the original keys');
+
+        $this->assertEquals($expectedResults, $results, 'The results from the getBulk callable should match the expected results');
+    }
+
+    public function testGetBulkConfigured(): void
+    {
+        $keys = ['key1', 'key2', 'key3'];
+        $expectedResults = [];
+        foreach ($keys as $key) {
+            $expectedResults[$key] = [
+                'key' => $key,
+                'value' => 'value for ' . $key,
+            ];
+        }
+        TestServiceA::resetStatic();
+        $methodCallObject = new MethodCallObject(
+            class: TestServiceA::class,
+            method: 'bulkTestFunction',
+            arguments: [$keys],
+        );
+
+        $inMemoryCache = new InMemoryCacheService(5);
+        $inMemoryCache->set(
+            key: KeyGeneratorService::getKey(
+                methodCallObject: $methodCallObject->clone(arguments: ['key2']),
+                throw: true,
+            ),
+            object: new CacheObjectWrapperDto(
+                object: [
+                    'key' => 'key2',
+                    'value' => 'value for key2',
+                ],
+                ttlSeconds: 300,
+            ),
+        );
+
+
+        $service = new MultiLevelCacheService(
+            caches: [$inMemoryCache],
+            writeL0OnSet: true,
+            stopwatch: null,
+            cacheDataCollector: null,
+            ttlRandomnessSeconds: 0,
+        );
+
+        $results = $service->getBulk(
+            methodCallObject: $methodCallObject,
+            mlcCacheableMethodAttribute: new MlcCacheableMethod(
+                ttlSeconds: 5,
+                bulkConfig: new BulkConfig(
+                    identifierSelector: 'key',
+                    listType: BulkListTypeEnum::ARRAY_ASSOC,
+                ),
+            ),
+        );
+
+        $this->assertTrue(TestServiceA::$sourceWasCalled, 'The source callable should have been called since bulk is not configured');
+        $this->assertEquals(['key1', 'key3'], TestServiceA::$entriesRequestedFromSource, 'The keys requested from the source should match the original keys');
+
+        $this->assertEquals($expectedResults, $results, 'The results from the getBulk callable should match the expected results');
+    }
+
+    public function testGetBulkWithIntIdentifier(): void
+    {
+        $keys = ['key1', 'key2', 'key3'];
+        $expectedResults = [];
+        $i = 1;
+        foreach ($keys as $key) {
+            $id = $i;
+            $expectedResults[$id] = [
+                'key' => $id,
+                'value' => 'value for ' . $key,
+            ];
+            $i++;
+        }
+        TestServiceA::resetStatic();
+        $methodCallObject = new MethodCallObject(
+            class: TestServiceA::class,
+            method: 'bulkTestFunctionWithIntIdentifier',
+            arguments: [$keys],
+        );
+
+
+        $service = new MultiLevelCacheService(
+            caches: [new InMemoryCacheService(5)],
+            writeL0OnSet: true,
+            stopwatch: null,
+            cacheDataCollector: null,
+            ttlRandomnessSeconds: 0,
+        );
+
+        $results = $service->getBulk(
+            methodCallObject: $methodCallObject,
+            mlcCacheableMethodAttribute: new MlcCacheableMethod(
+                ttlSeconds: 5,
+                bulkConfig: new BulkConfig(
+                    identifierSelector: 'key',
+                    listType: BulkListTypeEnum::ARRAY_ASSOC,
+                ),
+            ),
+        );
+
+        $this->assertTrue(TestServiceA::$sourceWasCalled, 'The source callable should have been called since bulk is not configured');
+        $this->assertEquals($keys, TestServiceA::$entriesRequestedFromSource, 'The keys requested from the source should match the original keys');
 
         $this->assertEquals($expectedResults, $results, 'The results from the getBulk callable should match the expected results');
     }
@@ -444,9 +550,10 @@ class MultiLevelCacheServiceTest extends TestCase
             ->expects($this->atLeastOnce())
             ->method('error');
 
+        TestServiceA::resetStatic();
         $methodCallObject = new MethodCallObject(
             class: TestServiceA::class,
-            method: 'testMethod',
+            method: 'bulkTestFunction',
             arguments: [$keys],
         );
 
@@ -470,24 +577,7 @@ class MultiLevelCacheServiceTest extends TestCase
             logger: $loggerMock,
         );
 
-        $sourceWasCalled = false;
-        $entriesRequestedFromSource = [];
-
         $results = $service->getBulk(
-            keys: $keys,
-            callable: function (array $keys) use (&$sourceWasCalled, &$entriesRequestedFromSource) {
-                $sourceWasCalled = true;
-                $entriesRequestedFromSource = $keys;
-                $values = [];
-                foreach ($keys as $key) {
-                    $values[] = [
-                        'key' => $key,
-                        'value' => 'value for ' . $key,
-                    ];
-                }
-
-                return $values;
-            },
             methodCallObject: $methodCallObject,
             mlcCacheableMethodAttribute: new MlcCacheableMethod(
                 ttlSeconds: 5,
@@ -495,8 +585,8 @@ class MultiLevelCacheServiceTest extends TestCase
             ),
         );
 
-        $this->assertTrue($sourceWasCalled, 'The source callable should have been called since bulk is not configured');
-        $this->assertEquals($keys, $entriesRequestedFromSource, 'The keys requested from the source should match the original keys');
+        $this->assertTrue(TestServiceA::$sourceWasCalled, 'The source callable should have been called since bulk is not configured');
+        $this->assertEquals($keys, TestServiceA::$entriesRequestedFromSource, 'The keys requested from the source should match the original keys');
 
         $this->assertEquals($expectedResults, $results, 'The results from the getBulk callable should match the expected results');
     }
@@ -514,9 +604,10 @@ class MultiLevelCacheServiceTest extends TestCase
             ->expects($this->atLeastOnce())
             ->method('error');
 
+        TestServiceA::resetStatic();
         $methodCallObject = new MethodCallObject(
             class: TestServiceA::class,
-            method: 'testMethod',
+            method: 'bulkTestFunctionWithWrongResponse',
             arguments: [$keys],
         );
 
@@ -526,15 +617,6 @@ class MultiLevelCacheServiceTest extends TestCase
         );
 
         $results = $service->getBulk(
-            keys: $keys,
-            callable: function (array $keys) {
-                $response = [];
-                foreach ($keys as $key) {
-                    $response[$key] = 'value for ' . $key;
-                }
-
-                return $response;
-            },
             methodCallObject: $methodCallObject,
             mlcCacheableMethodAttribute: new MlcCacheableMethod(
                 ttlSeconds: 5,

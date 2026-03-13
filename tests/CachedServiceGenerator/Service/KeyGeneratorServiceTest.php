@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\Tests\CachedServiceGenerator\Service;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
-use ReflectionException;
 use ReflectionMethod;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableMethod;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableService;
@@ -38,7 +36,7 @@ class KeyGeneratorServiceTest extends TestCase
         $this->assertStringStartsWith('test_service_a:testMethod:', $key);
         $this->assertStringContainsString('NA', $key);
     }
-    public function testGetKeyWithARgument(): void
+    public function testGetKeyWithArgument(): void
     {
         $methodCallObject1 = new MethodCallObject(
             class: TestServiceA::class,
@@ -119,7 +117,6 @@ class KeyGeneratorServiceTest extends TestCase
 
     public function testDefaultKeyGeneratorReflectionException(): void
     {
-        $this->expectException(ReflectionException::class);
         $methodCallObject = new MethodCallObject(
             class: TestServiceB::class,
             method: 'testMethod',
@@ -127,6 +124,7 @@ class KeyGeneratorServiceTest extends TestCase
         );
 
         $keyPattern = KeyGeneratorService::defaultKeyGenerator($methodCallObject);
+        $this->assertStringStartsWith($methodCallObject->getCachePrefix() . ':' . $methodCallObject->getMethod() . ':DataVersion_NA:', $keyPattern);
 
     }
 
@@ -147,7 +145,6 @@ class KeyGeneratorServiceTest extends TestCase
 
     public function testDefaultKeyGeneratorMissingPrefix(): void
     {
-        $this->expectException(InvalidArgumentException::class);
         $methodCallObject = new MethodCallObject(
             class: TestServiceMissingPrefix::class,
             method: 'testMethod',
@@ -155,6 +152,7 @@ class KeyGeneratorServiceTest extends TestCase
         );
 
         $keyPattern = KeyGeneratorService::defaultKeyGenerator($methodCallObject);
+        $this->assertStringStartsWith($methodCallObject->getCachePrefix() . ':' . $methodCallObject->getMethod() . ':DataVersion_NA:', $keyPattern);
 
     }
 

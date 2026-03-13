@@ -89,14 +89,8 @@ class /*{ServiceName}*/Cached implements /*{InterfacesString}*/
     private function callCachedBulkMethod(string $name, array $args, bool $isStatic): array
     {
         return $this->cache->getBulk(
-            keys: $args[0],
-            callable:  function ($keysToFetch) use ($name, $args, $isStatic) {
-                $argsCopy = $args;
-                $argsCopy[0] = $keysToFetch;
-                return $this->callSource($name, $argsCopy, $isStatic);
-            },
             methodCallObject: new MethodCallObject(
-                class: $this->instance::class,
+                class: $isStatic ? $this->instance::class : $this->instance,
                 method: $name,
                 arguments: $args,
                 additionalCacheKey: $this->getAdditionalCacheKey($name),
