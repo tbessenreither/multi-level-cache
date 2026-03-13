@@ -233,6 +233,11 @@ Here you can see all issues that the MLC has raised during the request. It's mos
 
 ![MLC Profiler Issues Section Example](images/profiler_issues.png)
 
+#### Additional insights
+If you have enhanced data collection enabled, some of the issues will also provide you with additional insights to help you better use the MLC. For example, if you have a low hit rate on one of your cache levels a hint will show up with details about this.
+
+![MLC Profiler Issue Additional Insights Example](images/profiler_issues_additional_insights.png)
+
 
 ### Metrics
 

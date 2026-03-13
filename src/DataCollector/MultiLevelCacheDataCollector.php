@@ -11,11 +11,17 @@ use Symfony\Component\HttpKernel\DataCollector\DataCollector;
 use Symfony\Component\HttpKernel\DataCollector\DataCollectorInterface;
 use Tbessenreither\MultiLevelCache\Dto\DataCollectorCacheInfoDto;
 use Tbessenreither\MultiLevelCache\Dto\DataCollectorIssueDto;
+use Tbessenreither\MultiLevelCache\Dto\DataCollectorIssueOccurrenceDto;
+use Tbessenreither\MultiLevelCache\Enum\InfoEnum;
 use Tbessenreither\MultiLevelCache\Interface\DataCollectorIssueEnumInterface;
 use Throwable;
 
 class MultiLevelCacheDataCollector extends DataCollector implements DataCollectorInterface
 {
+    private const LOW_HITRATE_NOTICE_THRESHOLD = 9;
+
+    private bool $isInitialized = false;
+    private bool $processedAdditionalIssues = false;
     public const NAME = 'tbessenreither.multi_level_cache_service_collector';
     public const TEMPLATE = '@TbessenreitherMultiLevelCache/Profiler/multi_level_cache_service_collector.html.twig';
 
@@ -26,6 +32,7 @@ class MultiLevelCacheDataCollector extends DataCollector implements DataCollecto
         private readonly bool $enhancedDataCollection = false,
     ) {
         $this->data['collectedIssues'] = [];
+        $this->isInitialized = true;
     }
 
     public function getName(): string
@@ -68,11 +75,19 @@ class MultiLevelCacheDataCollector extends DataCollector implements DataCollecto
 
     public function isCollecting(): bool
     {
+        if (!$this->isInitialized) {
+            return false;
+        }
+
         return $this->appEnv === 'dev';
     }
 
     public function isEnhancedDataCollectionEnabled(): bool
     {
+        if (!$this->isInitialized) {
+            return false;
+        }
+
         return $this->enhancedDataCollection;
     }
 
@@ -235,14 +250,19 @@ class MultiLevelCacheDataCollector extends DataCollector implements DataCollecto
         return $summaryGroups;
     }
 
-    public function raiseIssue(DataCollectorIssueEnumInterface $issue): void
+    public function raiseIssue(DataCollectorIssueEnumInterface $issue, ?DataCollectorIssueOccurrenceDto $occurrence = null, bool $skipCollectingChecks = false): void
     {
-        if (!$this->isCollecting()) {
+        if (
+            !$skipCollectingChecks
+            && !$this->isCollecting()
+        ) {
             return;
         }
 
-        if (!isset($this->data['collectedIssues'][$issue->getName()])) {
-            $this->data['collectedIssues'][$issue->getName()] = DataCollectorIssueDto::fromEnum($issue);
+        $issue = $this->getCollectedIssue($issue);
+
+        if (($skipCollectingChecks || $this->isEnhancedDataCollectionEnabled()) && $occurrence) {
+            $issue->addOccurrence($occurrence);
         }
     }
 
@@ -256,6 +276,8 @@ class MultiLevelCacheDataCollector extends DataCollector implements DataCollecto
 
     public function hasIssues(): bool
     {
+        $this->processAdditionalIssues();
+
         return !empty($this->data['collectedIssues']);
     }
 
@@ -278,6 +300,59 @@ class MultiLevelCacheDataCollector extends DataCollector implements DataCollecto
         }
 
         return $fetchedObject;
+    }
+
+
+    private function getCollectedIssue(DataCollectorIssueEnumInterface $issue): DataCollectorIssueDto
+    {
+        if (!isset($this->data['collectedIssues'][$issue->getName()])) {
+            $this->data['collectedIssues'][$issue->getName()] = DataCollectorIssueDto::fromEnum($issue);
+        }
+
+        return $this->data['collectedIssues'][$issue->getName()];
+
+    }
+
+    /**
+     * This method processes the collected data and raises issues based on it's findings.
+     * As it's only ever ran during the rendering of the profiler page and does not create additional data it can skip the isCollecting and isEnhancedDataCollectionEnabled checks.
+     */
+    private function processAdditionalIssues(): void
+    {
+        if ($this->processedAdditionalIssues === true) {
+            return;
+        }
+        $this->processedAdditionalIssues = true;
+
+        foreach ($this->getGroupedInstances() as $instancesByLevel) {
+            /**
+             * @var DataCollectorCacheInfoDto $instance
+             */
+            foreach ($instancesByLevel as $instance) {
+                $stats = $instance->getStatistics();
+
+                if (
+                    ($stats->getHits() === 0 && $stats->getMisses() > self::LOW_HITRATE_NOTICE_THRESHOLD)
+                    || ($stats->getMisses() > 10 && $stats->getHitRate() < 0.05)
+                ) {
+                    $this->raiseIssue(
+                        issue: InfoEnum::LOW_HITRATE_ON_CACHE_LEVEL,
+                        occurrence: new DataCollectorIssueOccurrenceDto(
+                            affectedCacheGroup: $instance->getGroupName(),
+                            affectedKeys: [],
+                            context: [
+                                'cache_level' => $instance->getLevel(),
+                                'hit_rate_percent' => number_format($stats->getHitRate() * 100, 2),
+                                'hits' => $stats->getHits(),
+                                'misses' => $stats->getMisses(),
+                                'noticeThreshold' => self::LOW_HITRATE_NOTICE_THRESHOLD,
+                            ],
+                        ),
+                        skipCollectingChecks: true,
+                    );
+                }
+            }
+        }
     }
 
 }

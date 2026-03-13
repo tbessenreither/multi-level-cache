@@ -16,6 +16,7 @@ use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\KeyGeneratorSe
 use Tbessenreither\MultiLevelCache\DataCollector\CacheStatistics;
 use Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector;
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
+use Tbessenreither\MultiLevelCache\Dto\DataCollectorIssueOccurrenceDto;
 use Tbessenreither\MultiLevelCache\Enum\ErrorEnum;
 use Tbessenreither\MultiLevelCache\Enum\WarningEnum;
 use Tbessenreither\MultiLevelCache\Exception\CacheBetaDecayException;
@@ -72,7 +73,13 @@ class MultiLevelCacheService
     public function set(string $key, object|string|int|float|bool|array|null $object, int $ttlSeconds): void
     {
         if (is_string($object)) {
-            $this->raiseIssue(WarningEnum::WARNING_STORED_STRING_VALUE);
+            $this->raiseIssue(WarningEnum::WARNING_STORED_STRING_VALUE, new DataCollectorIssueOccurrenceDto(
+                affectedCacheGroup: $this->cacheGroupName,
+                affectedKeys: [$key],
+                context: [
+                    'value' => $object,
+                ],
+            ));
         }
         $this->startStopwatchEvent('set()');
         $cacheObject = new CacheObjectWrapperDto($object, $ttlSeconds + rand(0, $this->ttlRandomnessSeconds));
@@ -206,12 +213,12 @@ class MultiLevelCacheService
         $this->stopStopwatchEvent('delete()');
     }
 
-    public function raiseIssue(DataCollectorIssueEnumInterface $issue): void
+    public function raiseIssue(DataCollectorIssueEnumInterface $issue, ?DataCollectorIssueOccurrenceDto $occurrence = null): void
     {
         if ($issue instanceof ErrorEnum) {
             $this->logger?->error('MultiLevelCacheService issue: ' . $issue->getName() . ' - ' . $issue->getDescription());
         }
-        $this->cacheDataCollector?->raiseIssue($issue);
+        $this->cacheDataCollector?->raiseIssue($issue, $occurrence);
     }
 
     private function constructorHelperCheckRequirements(): void
@@ -298,7 +305,13 @@ class MultiLevelCacheService
         }
 
         if (is_string($cachedObject->getObject())) {
-            $this->raiseIssue(WarningEnum::WARNING_STORED_STRING_VALUE);
+            $this->raiseIssue(WarningEnum::WARNING_STORED_STRING_VALUE, new DataCollectorIssueOccurrenceDto(
+                affectedCacheGroup: $this->cacheGroupName,
+                affectedKeys: [$key],
+                context: [
+                    'value' => $cachedObject->getObject(),
+                ],
+            ));
         }
 
         return $cachedObject;

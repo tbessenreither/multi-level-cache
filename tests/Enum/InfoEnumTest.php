@@ -6,17 +6,17 @@ namespace Tbessenreither\MultiLevelCache\Tests\Enum;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Tbessenreither\MultiLevelCache\Enum\ErrorEnum;
+use Tbessenreither\MultiLevelCache\Enum\InfoEnum;
 
-#[CoversClass(ErrorEnum::class)]
-final class ErrorEnumTest extends TestCase
+#[CoversClass(InfoEnum::class)]
+final class InfoEnumTest extends TestCase
 {
     public function testCasesProvideExpectedFields(): void
     {
-        foreach (ErrorEnum::cases() as $case) {
+        foreach (InfoEnum::cases() as $case) {
             $this->assertNotEmpty($case->getName());
             $this->assertNotEmpty($case->getDescription());
-            $this->assertSame('error', $case->getType());
+            $this->assertSame('info', $case->getType());
             $this->assertNotEmpty($case->getBadgeClass());
             $this->assertNotEmpty($case->getStatusClass());
         }
