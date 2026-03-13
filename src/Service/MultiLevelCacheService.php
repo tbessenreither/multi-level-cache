@@ -18,6 +18,7 @@ use Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector;
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
 use Tbessenreither\MultiLevelCache\Dto\DataCollectorIssueOccurrenceDto;
 use Tbessenreither\MultiLevelCache\Enum\ErrorEnum;
+use Tbessenreither\MultiLevelCache\Enum\InfoEnum;
 use Tbessenreither\MultiLevelCache\Enum\WarningEnum;
 use Tbessenreither\MultiLevelCache\Exception\CacheBetaDecayException;
 use Tbessenreither\MultiLevelCache\Interface\CacheInformationInterface;
@@ -73,7 +74,7 @@ class MultiLevelCacheService
     public function set(string $key, object|string|int|float|bool|array|null $object, int $ttlSeconds): void
     {
         if (is_string($object)) {
-            $this->raiseIssue(WarningEnum::WARNING_STORED_STRING_VALUE, new DataCollectorIssueOccurrenceDto(
+            $this->raiseIssue(InfoEnum::STORED_STRING_VALUE, new DataCollectorIssueOccurrenceDto(
                 affectedCacheGroup: $this->cacheGroupName,
                 affectedKeys: [$key],
                 context: [
@@ -139,6 +140,28 @@ class MultiLevelCacheService
         array $keys = [],
         mixed $callable = null,
     ): array {
+
+        if ($callable !== null) {
+            $this->raiseIssue(WarningEnum::DEPRECATION_WARNING, new DataCollectorIssueOccurrenceDto(
+                affectedCacheGroup: $this->cacheGroupName,
+                context: [
+                    'details' => 'Using the $callable parameter in getBulk is deprecated and will be removed in future versions. Please point to a valid method within the $methodCallObject instead.',
+                    'methodCallObject' => $methodCallObject,
+                    'mlcCacheableMethodAttribute' => $mlcCacheableMethodAttribute,
+                ],
+            ));
+        }
+        if (!empty($keys)) {
+            $this->raiseIssue(WarningEnum::DEPRECATION_WARNING, new DataCollectorIssueOccurrenceDto(
+                affectedCacheGroup: $this->cacheGroupName,
+                context: [
+                    'details' => 'Passing keys via the $keys parameter in getBulk is deprecated and will be removed in future versions. Please pass the keys via the MethodCallObject argument instead.',
+                    'methodCallObject' => $methodCallObject,
+                    'mlcCacheableMethodAttribute' => $mlcCacheableMethodAttribute,
+                ],
+            ));
+        }
+
         $keys = $methodCallObject->getArguments()[0];
         $stopwatchEventName = 'getBulk()';
         try {
@@ -325,7 +348,7 @@ class MultiLevelCacheService
         }
 
         if (is_string($cachedObject->getObject())) {
-            $this->raiseIssue(WarningEnum::WARNING_STORED_STRING_VALUE, new DataCollectorIssueOccurrenceDto(
+            $this->raiseIssue(InfoEnum::STORED_STRING_VALUE, new DataCollectorIssueOccurrenceDto(
                 affectedCacheGroup: $this->cacheGroupName,
                 affectedKeys: [$key],
                 context: [
