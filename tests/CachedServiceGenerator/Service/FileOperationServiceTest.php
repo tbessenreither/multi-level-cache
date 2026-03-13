@@ -6,6 +6,8 @@ namespace Tbessenreither\MultiLevelCache\Tests\CachedServiceGenerator\Service;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use Something\Completely\Different\CorruptedNamespace;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\FileOperationService;
 use Tbessenreither\MultiLevelCache\Tests\TestFiles\FileOperationServiceClasses\Other\TargetClass as TargetClassOther;
 use Tbessenreither\MultiLevelCache\Tests\TestFiles\FileOperationServiceClasses\Resource\TargetClass as TargetClassResource;
@@ -106,6 +108,14 @@ class FileOperationServiceTest extends TestCase
             'path' => $this->projectRootPath . '/tests/',
         ];
         $this->assertEquals($result, $expected);
+    }
+
+    public function testFindRootForClassWithCorruptedNamespace(): void
+    {
+        require_once($this->testFilesRootPath . '/CorruptedNamespace.php');
+        $this->expectException(RuntimeException::class);
+        $result = FileOperationService::findRootForClass(CorruptedNamespace::class);
+        var_dump($result);
     }
 
     private function checkFileSyntax(string $file): void

@@ -137,9 +137,6 @@ class MultiLevelCacheDataCollector extends DataCollector implements DataCollecto
         $adapters = [];
         foreach ($this->getGroupedInstances() as $groupName => $instancesByLevel) {
             foreach ($instancesByLevel as $instance) {
-                if (!$instance instanceof DataCollectorCacheInfoDto) {
-                    continue;
-                }
                 $adapters[] = $instance->getName();
             }
         }
@@ -209,9 +206,6 @@ class MultiLevelCacheDataCollector extends DataCollector implements DataCollecto
 
         foreach ($this->getGroupedInstances() as $instancesByLevel) {
             foreach ($instancesByLevel as $instance) {
-                if (!$instance instanceof DataCollectorCacheInfoDto) {
-                    continue;
-                }
                 if ($adapterName !== null && $instance->getName() !== $adapterName) {
                     continue;
                 }

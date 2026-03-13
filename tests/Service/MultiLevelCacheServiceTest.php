@@ -12,6 +12,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
+use ReflectionMethod;
 use RuntimeException;
 use stdClass;
 use Symfony\Component\Stopwatch\Stopwatch;
@@ -352,6 +354,13 @@ class MultiLevelCacheServiceTest extends TestCase
     public function testGetBulkConfigured(): void
     {
         $keys = ['key1', 'key2', 'key3'];
+        $expectedResults = [];
+        foreach ($keys as $key) {
+            $expectedResults[$key] = [
+                'key' => $key,
+                'value' => 'value for ' . $key,
+            ];
+        }
 
         $methodCallObject = new MethodCallObject(
             class: TestServiceA::class,
@@ -413,14 +422,128 @@ class MultiLevelCacheServiceTest extends TestCase
 
         $this->assertTrue($sourceWasCalled, 'The source callable should have been called since bulk is not configured');
         $this->assertEquals(['key1', 'key3'], $entriesRequestedFromSource, 'The keys requested from the source should match the original keys');
+
+        $this->assertEquals($expectedResults, $results, 'The results from the getBulk callable should match the expected results');
+    }
+
+    public function testGetBulkMisconfigured(): void
+    {
+        $keys = ['key1', 'key2', 'key3'];
         $expectedResults = [];
         foreach ($keys as $key) {
-            $expectedResults[$key] = [
+            $expectedResults[] = [
                 'key' => $key,
                 'value' => 'value for ' . $key,
             ];
         }
+
+        $loggerMock = $this->createMock(LoggerInterface::class);
+        $loggerMock
+            ->expects($this->atLeastOnce())
+            ->method('error');
+
+        $methodCallObject = new MethodCallObject(
+            class: TestServiceA::class,
+            method: 'testMethod',
+            arguments: [$keys],
+        );
+
+        $inMemoryCache = new InMemoryCacheService(5);
+        $inMemoryCache->set(
+            key: KeyGeneratorService::getKey(
+                methodCallObject: $methodCallObject->clone(arguments: ['key2']),
+                throw: true,
+            ),
+            object: new CacheObjectWrapperDto(
+                object: [
+                    'key' => 'key2',
+                    'value' => 'value for key2',
+                ],
+                ttlSeconds: 300,
+            ),
+        );
+
+        $service = new MultiLevelCacheService(
+            caches: [$inMemoryCache],
+            logger: $loggerMock,
+        );
+
+        $sourceWasCalled = false;
+        $entriesRequestedFromSource = [];
+
+        $results = $service->getBulk(
+            keys: $keys,
+            callable: function (array $keys) use (&$sourceWasCalled, &$entriesRequestedFromSource) {
+                $sourceWasCalled = true;
+                $entriesRequestedFromSource = $keys;
+                $values = [];
+                foreach ($keys as $key) {
+                    $values[] = [
+                        'key' => $key,
+                        'value' => 'value for ' . $key,
+                    ];
+                }
+
+                return $values;
+            },
+            methodCallObject: $methodCallObject,
+            mlcCacheableMethodAttribute: new MlcCacheableMethod(
+                ttlSeconds: 5,
+                bulkConfig: null,
+            ),
+        );
+
+        $this->assertTrue($sourceWasCalled, 'The source callable should have been called since bulk is not configured');
+        $this->assertEquals($keys, $entriesRequestedFromSource, 'The keys requested from the source should match the original keys');
+
         $this->assertEquals($expectedResults, $results, 'The results from the getBulk callable should match the expected results');
+    }
+
+    public function testGetBulkWithInvalidSourceResponse(): void
+    {
+        $keys = ['key1', 'key2', 'key3'];
+        $expectedResults = [];
+        foreach ($keys as $key) {
+            $expectedResults[$key] = 'value for ' . $key;
+        }
+
+        $loggerMock = $this->createMock(LoggerInterface::class);
+        $loggerMock
+            ->expects($this->atLeastOnce())
+            ->method('error');
+
+        $methodCallObject = new MethodCallObject(
+            class: TestServiceA::class,
+            method: 'testMethod',
+            arguments: [$keys],
+        );
+
+        $service = new MultiLevelCacheService(
+            caches: [new InMemoryCacheService(5)],
+            logger: $loggerMock,
+        );
+
+        $results = $service->getBulk(
+            keys: $keys,
+            callable: function (array $keys) {
+                $response = [];
+                foreach ($keys as $key) {
+                    $response[$key] = 'value for ' . $key;
+                }
+
+                return $response;
+            },
+            methodCallObject: $methodCallObject,
+            mlcCacheableMethodAttribute: new MlcCacheableMethod(
+                ttlSeconds: 5,
+                bulkConfig: new BulkConfig(
+                    identifierSelector: 'key',
+                    listType: BulkListTypeEnum::ARRAY_ASSOC,
+                ),
+            ),
+        );
+
+        $this->assertEquals($expectedResults, $results, 'The results should be an empty array when the source response is invalid');
     }
 
     public function testCacheStringValue(): void
@@ -483,6 +606,55 @@ class MultiLevelCacheServiceTest extends TestCase
             $cacheService->set(key: 'key', object: $input, ttlSeconds: 300);
             $this->assertSame($input, $cacheService->get(key: 'key'));
         }
+    }
+
+    public function testTryFetchFromCacheLevelWhileReadDisabled(): void
+    {
+        $inMemoryCache = new InMemoryCacheService(5);
+
+        $service = new MultiLevelCacheService(
+            caches: [$inMemoryCache],
+            cacheReadDisabled:true,
+        );
+
+        $result = $service->get('testkey');
+
+        $this->assertNull($result, 'Result should be null when cache read is disabled');
+    }
+
+    public function testGetCacheImplementationForInvalidLevel(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        $methodReleflection = new ReflectionMethod(MultiLevelCacheService::class, 'getCacheImplementation');
+        $methodReleflection->setAccessible(true);
+        $service = new MultiLevelCacheService(
+            caches: [new InMemoryCacheService(5)],
+        );
+        $methodReleflection->invoke($service, 999);
+    }
+
+    public function testConstructorHelperSetupDataCollector(): void
+    {
+        $dataCollectorMock = $this->createMock(MultiLevelCacheDataCollector::class);
+        $dataCollectorMock
+            ->expects($this->atLeastOnce())
+            ->method('isCollecting')
+            ->willReturn(true);
+        $dataCollectorMock
+            ->expects($this->atLeastOnce())
+            ->method('addInstance');
+
+        $service = new MultiLevelCacheService(
+            caches: [new InMemoryCacheService(5)],
+            cacheDataCollector: $dataCollectorMock,
+        );
+
+        $methodReflection = new ReflectionMethod(MultiLevelCacheService::class, 'getStatisticsObject');
+        $methodReflection->setAccessible(true);
+        $statisticsObject = $methodReflection->invoke($service, 0);
+        $this->assertInstanceOf(CacheStatistics::class, $statisticsObject, 'The getStatisticsObject method should return an instance of CacheStatistics');
+        $this->assertIsArray($statisticsObject->getConfigData(), 'The config data in the statistics object should be an array');
     }
 
     private function fixYieldedConfiguration(array &$configuration)

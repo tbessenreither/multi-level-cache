@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tbessenreither\MultiLevelCache\Service;
 
 use InvalidArgumentException;
+use Psr\Log\LoggerInterface;
 use ReflectionClass;
 use RuntimeException;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -15,7 +16,6 @@ use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\KeyGeneratorSe
 use Tbessenreither\MultiLevelCache\DataCollector\CacheStatistics;
 use Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector;
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
-use Tbessenreither\MultiLevelCache\Enum\BulkListTypeEnum;
 use Tbessenreither\MultiLevelCache\Enum\ErrorEnum;
 use Tbessenreither\MultiLevelCache\Enum\WarningEnum;
 use Tbessenreither\MultiLevelCache\Exception\CacheBetaDecayException;
@@ -58,6 +58,7 @@ class MultiLevelCacheService
         private string $cacheGroupName = '',
         #[Autowire('%env(defined:MLC_DISABLE_READ)%')]
         private bool $cacheReadDisabled = false,
+        private ?LoggerInterface $logger = null,
     ) {
         $this->constructorHelperCheckRequirements();
         $this->constructorHelperSetDefaults();
@@ -120,64 +121,77 @@ class MultiLevelCacheService
         return $callableResult;
     }
 
-    public function getBulk(array $keys, ?callable $callable = null, MethodCallObject $methodCallObject, MlcCacheableMethod $mlcCacheableMethodAttribute): array
+    public function getBulk(array $keys, callable $callable, MethodCallObject $methodCallObject, MlcCacheableMethod $mlcCacheableMethodAttribute): array
     {
-        $this->raiseIssue(WarningEnum::WARNING_EXPERIMENTAL_FEATURE_BULK);
+        $stopwatchEventName = 'getBulk()';
+        try {
+            $this->startStopwatchEvent($stopwatchEventName);
+            $this->raiseIssue(WarningEnum::WARNING_EXPERIMENTAL_FEATURE_BULK);
 
-        if ($mlcCacheableMethodAttribute->getBulkConfig() === null) {
-            $this->raiseIssue(ErrorEnum::WARNING_BULK_CONFIG_MISSING);
+            if ($mlcCacheableMethodAttribute->getBulkConfig() === null) {
+                $this->raiseIssue(ErrorEnum::ERROR_BULK_CONFIG_MISSING);
 
-            return $this->get(KeyGeneratorService::getKey($methodCallObject), $callable, $mlcCacheableMethodAttribute->getTtlSeconds());
-        }
-
-        $responses = [];
-        $requestsToSource = [];
-
-        // First deconstruct into cached and non-cached requests
-        foreach ($keys as $identifier) {
-            $key = KeyGeneratorService::getKey($this->cloneBulkMethodCallObjectWithNewIdentifier($methodCallObject, $identifier));
-
-            $cachedResponse = $this->get($key);
-            if ($cachedResponse !== null) {
-                $responses[] = $cachedResponse;
-            } else {
-                $requestsToSource[] = $identifier;
+                throw new RuntimeException('BulkConfig is required for bulk operations');
             }
-        }
 
-        // do one bulk call to source for all non-cached requests and cache them individually
-        if (!empty($requestsToSource)) {
-            $responsesFromSource = $this->getFromSource(
-                key: $requestsToSource,
-                callable: $callable,
-                ttlSeconds: $mlcCacheableMethodAttribute->getTtlSeconds(),
-            );
+            $responses = [];
+            $requestsToSource = [];
 
-            foreach ($responsesFromSource as $response) {
-                if (!is_array($response) && !is_object($response)) {
-                    throw new RuntimeException('Bulk methods must return arrays of objects or arrays.');
+            // First deconstruct into cached and non-cached requests
+            foreach ($keys as $identifier) {
+                $key = KeyGeneratorService::getKey($this->cloneBulkMethodCallObjectWithNewIdentifier($methodCallObject, $identifier));
+
+                $cachedResponse = $this->get($key);
+                if ($cachedResponse !== null) {
+                    $responses[] = $cachedResponse;
+                } else {
+                    $requestsToSource[] = $identifier;
                 }
+            }
 
-                $identifierForResponse = BulkMapperService::getIdentifierFromObjectResult($response, $mlcCacheableMethodAttribute->getBulkConfig()->getIdentifierSelector());
-                $key = KeyGeneratorService::getKey($this->cloneBulkMethodCallObjectWithNewIdentifier($methodCallObject, $identifierForResponse));
-                $this->set(
-                    key: $key,
-                    object: $response,
+            // do one bulk call to source for all non-cached requests and cache them individually
+            if (!empty($requestsToSource)) {
+                $responsesFromSource = $this->getFromSource(
+                    key: $requestsToSource,
+                    callable: $callable,
                     ttlSeconds: $mlcCacheableMethodAttribute->getTtlSeconds(),
                 );
 
-                $responses[] = $response;
+                foreach ($responsesFromSource as $response) {
+                    if (!is_array($response) && !is_object($response)) {
+                        $this->raiseIssue(ErrorEnum::ERROR_BULK_OPERATION_FAILED_INVALID_RESPONSE);
+
+                        throw new RuntimeException('Bulk methods must return arrays of objects or arrays.');
+                    }
+
+                    $identifierForResponse = BulkMapperService::getIdentifierFromObjectResult($response, $mlcCacheableMethodAttribute->getBulkConfig()->getIdentifierSelector());
+                    $key = KeyGeneratorService::getKey($this->cloneBulkMethodCallObjectWithNewIdentifier($methodCallObject, $identifierForResponse));
+                    $this->set(
+                        key: $key,
+                        object: $response,
+                        ttlSeconds: $mlcCacheableMethodAttribute->getTtlSeconds(),
+                    );
+
+                    $responses[] = $response;
+                }
             }
-        }
 
-        // Finally, map responses back to expected format
-        if (BulkListTypeEnum::ARRAY_NUMERIC === $mlcCacheableMethodAttribute->getBulkConfig()->getListType()) {
-            return BulkMapperService::mapArrayNumeric($responses);
-        } elseif (BulkListTypeEnum::ARRAY_ASSOC === $mlcCacheableMethodAttribute->getBulkConfig()->getListType()) {
-            return BulkMapperService::mapArrayAssoc($responses, $mlcCacheableMethodAttribute->getBulkConfig()->getIdentifierSelector());
-        }
+            $mappedResponses = BulkMapperService::mapByListType($responses, $mlcCacheableMethodAttribute->getBulkConfig()->getListType(), $mlcCacheableMethodAttribute->getBulkConfig()->getIdentifierSelector());
+            $this->stopStopwatchEvent($stopwatchEventName);
 
-        throw new RuntimeException('Unsupported list type ' . $mlcCacheableMethodAttribute->getBulkConfig()->getListType()->name);
+            return $mappedResponses;
+        } catch (Throwable $throwable) {
+            $this->logger?->error('Error in getBulk. Falling back to source.', ['exception' => $throwable]);
+
+            $fallbackResult = $this->getFromSource(
+                key: $keys,
+                callable: $callable,
+                ttlSeconds: $mlcCacheableMethodAttribute->getTtlSeconds(),
+            );
+            $this->stopStopwatchEvent($stopwatchEventName);
+
+            return $fallbackResult;
+        }
     }
 
     /**
@@ -194,6 +208,9 @@ class MultiLevelCacheService
 
     public function raiseIssue(DataCollectorIssueEnumInterface $issue): void
     {
+        if ($issue instanceof ErrorEnum) {
+            $this->logger?->error('MultiLevelCacheService issue: ' . $issue->getName() . ' - ' . $issue->getDescription());
+        }
         $this->cacheDataCollector?->raiseIssue($issue);
     }
 

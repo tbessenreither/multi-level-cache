@@ -5,12 +5,28 @@ declare(strict_types=1);
 namespace Tbessenreither\MultiLevelCache\Service;
 
 use InvalidArgumentException;
+use RuntimeException;
+use Tbessenreither\MultiLevelCache\Enum\BulkListTypeEnum;
 
 class BulkMapperService
 {
     public static function mapArrayNumeric(array $responses): array
     {
         return array_values($responses);
+    }
+
+    public static function mapByListType(mixed $responses, BulkListTypeEnum $listType, string $identifierSelector): mixed
+    {
+        if (BulkListTypeEnum::ARRAY_NUMERIC === $listType) {
+            return self::mapArrayNumeric($responses);
+        } elseif (BulkListTypeEnum::ARRAY_ASSOC === $listType) {
+            return self::mapArrayAssoc($responses, $identifierSelector);
+        }
+
+        // @codeCoverageIgnoreStart
+        // This will throw when the Enum is extended but the method is not updated, so we want to make sure this is covered, but it can not be triggered with the current Enum definition
+        throw new RuntimeException('Unsupported list type ' . $listType->name);
+        // @codeCoverageIgnoreEnd
     }
 
     public static function mapArrayAssoc(array $responses, string $identifierSelector): array

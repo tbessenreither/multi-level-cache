@@ -7,6 +7,7 @@ namespace Tbessenreither\MultiLevelCache\Tests\Service;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Tbessenreither\MultiLevelCache\Enum\BulkListTypeEnum;
 use Tbessenreither\MultiLevelCache\Service\BulkMapperService;
 use Tbessenreither\MultiLevelCache\Tests\Service\TestClasses\Recursive;
 
@@ -15,6 +16,23 @@ use Tbessenreither\MultiLevelCache\Tests\Service\TestClasses\Recursive;
 
 class BulkMapperServiceTest extends TestCase
 {
+    public function testMapByListTypeWithValidInput(): void
+    {
+        $input = [
+            ['id' => 6, 'value' => 'a'],
+            ['id' => 2, 'value' => 'b'],
+            ['id' => 3, 'value' => 'c'],
+        ];
+        $expected = [
+            6 => ['id' => 6, 'value' => 'a'],
+            2 => ['id' => 2, 'value' => 'b'],
+            3 => ['id' => 3, 'value' => 'c'],
+        ];
+        $this->assertEquals($expected, BulkMapperService::mapByListType($input, BulkListTypeEnum::ARRAY_ASSOC, 'id'));
+
+        $this->assertEquals($input, BulkMapperService::mapByListType($input, BulkListTypeEnum::ARRAY_NUMERIC, 'id'));
+    }
+
     public function testMapArrayNumeric(): void
     {
         $input = ['key' => 'a', 'b', 6 => 'c'];
@@ -34,6 +52,7 @@ class BulkMapperServiceTest extends TestCase
             2 => ['id' => 2, 'value' => 'b'],
             3 => ['id' => 3, 'value' => 'c'],
         ];
+
         $this->assertEquals($expected, BulkMapperService::mapArrayAssoc($input, 'id'));
     }
 

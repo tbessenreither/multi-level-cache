@@ -151,6 +151,45 @@ class MultiLevelCacheDataCollectorTest extends TestCase
         $this->assertGreaterThanOrEqual(0.0, $summary['timings']['time total']['value']);
     }
 
+    public function testGetLevelsSummaryForAdapter(): void
+    {
+        $collector = new MultiLevelCacheDataCollector('dev', false);
+
+        $s1 = new CacheStatistics();
+        $s2 = new CacheStatistics();
+
+        // instance at level 0
+        $collector->addInstance('g', 'A', 0, stdClass::class, $s1);
+        // instance at level 2
+        $collector->addInstance('g', 'B', 2, stdClass::class, $s2);
+
+        // record hits/misses and a write runtime to s2
+        $collector->registerCacheHit('g', 0, 'k');
+        $collector->registerCacheMiss('g', 2, 'k2');
+
+        // simulate a write runtime on s2
+        $s2->startTrackingRuntime();
+        usleep(5000); // small sleep to accumulate some time
+        $s2->stopTrackingRuntime(CacheStatistics::TYPE_WRITE);
+
+        $levels = $collector->getLevels();
+        // should contain 0 and 2
+        $this->assertContains(0, $levels);
+        $this->assertContains(2, $levels);
+
+        $adapters = $collector->getAdapters();
+        $this->assertContains('A', $adapters);
+        $this->assertContains('B', $adapters);
+
+        $summary = $collector->getSummary('B');
+
+        // IO values aggregated
+        $this->assertGreaterThanOrEqual(0, $summary['io']['read hits']['value']);
+        $this->assertGreaterThanOrEqual(1, $summary['io']['read misses']['value']);
+        $this->assertGreaterThanOrEqual(0, $summary['timings']['time write']['value']);
+        $this->assertGreaterThanOrEqual(0.0, $summary['timings']['time total']['value']);
+    }
+
     public function testRaiseIssueAndCollectingBehaviour(): void
     {
         $collectorDev = new MultiLevelCacheDataCollector('dev', false);
