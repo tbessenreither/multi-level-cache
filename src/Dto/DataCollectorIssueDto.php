@@ -6,8 +6,13 @@ namespace Tbessenreither\MultiLevelCache\Dto;
 
 use Tbessenreither\MultiLevelCache\Interface\DataCollectorIssueEnumInterface;
 
-readonly class DataCollectorIssueDto
+class DataCollectorIssueDto
 {
+    /**
+     * @var array<string, DataCollectorIssueOccurrenceDto> $occurrences
+     */
+    private array $occurrences = [];
+
     public function __construct(
         private string $name,
         private string $value,
@@ -51,6 +56,19 @@ readonly class DataCollectorIssueDto
     public function getStatusClass(): string
     {
         return $this->statusClass;
+    }
+
+    public function addOccurrence(DataCollectorIssueOccurrenceDto $occurrence): void
+    {
+        $this->occurrences[$occurrence->getUniqueHash()] = $occurrence;
+    }
+
+    /**
+     * @return array<int, DataCollectorIssueOccurrenceDto>
+     */
+    public function getOccurrences(): array
+    {
+        return array_values($this->occurrences);
     }
 
 }

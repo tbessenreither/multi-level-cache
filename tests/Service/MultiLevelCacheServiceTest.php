@@ -25,6 +25,7 @@ use Tbessenreither\MultiLevelCache\DataCollector\CacheStatistics;
 use Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector;
 use Tbessenreither\MultiLevelCache\Dto\BulkConfig;
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
+use Tbessenreither\MultiLevelCache\Dto\DataCollectorIssueOccurrenceDto;
 use Tbessenreither\MultiLevelCache\Enum\BulkListTypeEnum;
 use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
 use Tbessenreither\MultiLevelCache\Service\BulkMapperService;
@@ -44,6 +45,7 @@ use TypeError;
 #[UsesClass(KeyGeneratorService::class)]
 #[UsesClass(BulkConfig::class)]
 #[UsesClass(BulkMapperService::class)]
+#[UsesClass(DataCollectorIssueOccurrenceDto::class)]
 class MultiLevelCacheServiceTest extends TestCase
 {
     private CacheObjectWrapperDto $testObj;
@@ -567,6 +569,8 @@ class MultiLevelCacheServiceTest extends TestCase
             object: $cacheValue,
             ttlSeconds: 300,
         );
+
+        $cacheService->get(key: $cacheKey);
 
         $this->assertSame($cacheValue, $cacheService->get(key: $cacheKey));
     }

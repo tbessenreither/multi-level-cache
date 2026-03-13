@@ -9,8 +9,6 @@ use PHPUnit\Framework\TestCase;
 use Tbessenreither\MultiLevelCache\Enum\CacheTypeEnum;
 
 #[CoversClass(CacheTypeEnum::class)]
-
-
 final class CacheTypeEnumTest extends TestCase
 {
     public function testCasesProvideExpectedFields(): void

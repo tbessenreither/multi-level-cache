@@ -30,6 +30,27 @@
 		tr.log-status-silenced > td:first-child:before {
 			background: #a78bfa;
 		}
+        .issue-occurrences p{
+            font-size: 12px;
+        }
+
+        .badge-info{
+            background-color: #2e88e7;
+            color: #ffffff;
+        }
+        tr.log-status-info > td:first-child {
+            position: relative;
+        }
+        tr.log-status-info > td:first-child::before {
+            background: #2e88e7;
+            border-radius: 0;
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
 	</style>
 {% endblock %}
 
@@ -63,6 +84,28 @@
 					</td>
 					<td>{{ issue.description }}</td>
 				</tr>
+                {% if issue.occurrences is not empty %}
+                    <tr>
+                        <td colspan="2">
+                            <a class="sf-toggle" data-toggle-selector="#issue-{{ issueKey }}-occurrences" data-toggle-initial="false" href="#">
+								<span class="label">Show Occurrences</span>
+							</a>
+                            <div id="issue-{{ issueKey }}-occurrences" class="sf-toggle-content issue-occurrences">
+                                <h4>Occurrences</h4>
+                                {% for occurrence in issue.occurrences %}
+                                    <p><strong>Cache Group:</strong> {{ occurrence.affectedCacheGroup ?: 'N/A' }}<br>
+                                    {% if occurrence.affectedKeys is not empty %}
+                                        <strong>Keys:</strong><br>{{ occurrence.affectedKeys|join(',<br>') }}
+                                    {% endif %}
+                                    {% if occurrence.context is not empty %}
+                                        <pre>{{ dump(occurrence.context) }}</pre>
+                                    {% endif %}
+                                    </p>
+                                {% endfor %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
 			{% endfor %}
 		</tbody>
 	</table>
