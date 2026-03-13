@@ -177,6 +177,14 @@ class MultiLevelCacheService
                         'mlcCacheableMethodAttribute' => $mlcCacheableMethodAttribute,
                     ],
                 ));
+                $this->raiseIssue(ErrorEnum::ERROR_BULK_CONFIG_MISSING, new DataCollectorIssueOccurrenceDto(
+                    affectedCacheGroup: $this->cacheGroupName,
+                    affectedKeys: $keys,
+                    context: [
+                        'methodCallObject' => $methodCallObject,
+                        'mlcCacheableMethodAttribute' => $mlcCacheableMethodAttribute,
+                    ],
+                ));
 
                 throw new RuntimeException('BulkConfig is required for bulk operations');
             }
@@ -201,8 +209,12 @@ class MultiLevelCacheService
                 $sourceArguments = $methodCallObject->getArguments();
                 $sourceArguments[0] = $requestsToSource;
                 $methodCallObjectForSource = $methodCallObject->clone(arguments: $sourceArguments);
+                $sourceArguments = $methodCallObject->getArguments();
+                $sourceArguments[0] = $requestsToSource;
+                $methodCallObjectForSource = $methodCallObject->clone(arguments: $sourceArguments);
                 $responsesFromSource = $this->getFromSource(
                     key: $requestsToSource,
+                    callable: $callable ?? $methodCallObjectForSource->getCallable(),
                     callable: $callable ?? $methodCallObjectForSource->getCallable(),
                     ttlSeconds: $mlcCacheableMethodAttribute->getTtlSeconds(),
                 );
@@ -235,6 +247,7 @@ class MultiLevelCacheService
 
             $fallbackResult = $this->getFromSource(
                 key: $keys,
+                callable: $callable ?? $methodCallObject->getCallable(),
                 callable: $callable ?? $methodCallObject->getCallable(),
                 ttlSeconds: $mlcCacheableMethodAttribute->getTtlSeconds(),
             );
@@ -512,7 +525,11 @@ class MultiLevelCacheService
     }
 
     private function cloneBulkMethodCallObjectWithNewIdentifier(MethodCallObject $methodCallObject, string|int $newIdentifier): MethodCallObject
+    private function cloneBulkMethodCallObjectWithNewIdentifier(MethodCallObject $methodCallObject, string|int $newIdentifier): MethodCallObject
     {
+        if (is_int($newIdentifier)) {
+            $newIdentifier = (string) $newIdentifier;
+        }
         if (is_int($newIdentifier)) {
             $newIdentifier = (string) $newIdentifier;
         }
