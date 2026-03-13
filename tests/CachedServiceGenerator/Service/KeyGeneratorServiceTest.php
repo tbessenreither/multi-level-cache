@@ -8,7 +8,9 @@ use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use ReflectionException;
+use ReflectionMethod;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableMethod;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableService;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
@@ -154,6 +156,30 @@ class KeyGeneratorServiceTest extends TestCase
 
         $keyPattern = KeyGeneratorService::defaultKeyGenerator($methodCallObject);
 
+    }
+
+    public function testGetCacheKeyPrefixWithEmptyCache(): void
+    {
+        $methodCallObject = new MethodCallObject(
+            class: TestServiceA::class,
+            method: 'testMethod',
+            arguments: []
+        );
+
+        // Clear the cache
+        $reflectionClass = new ReflectionClass(KeyGeneratorService::class);
+        $cacheKeyPrefixCacheProperty = $reflectionClass->getProperty('cacheKeyPrefixCache');
+        $cacheKeyPrefixCacheProperty->setAccessible(true);
+        $cacheKeyPrefixCacheProperty->setValue(null, []);
+
+        $methodReflection = new ReflectionMethod(KeyGeneratorService::class, 'getCacheKeyPrefix');
+        $methodReflection->setAccessible(true);
+        $prefix1 = $methodReflection->invoke(null, $methodCallObject);
+        $this->assertEquals('test_service_a', $prefix1);
+
+
+        $prefix2 = $methodReflection->invoke(null, $methodCallObject);
+        $this->assertEquals('test_service_a', $prefix2);
     }
 
     public function testAdditionalCacheKeyBehaviour(): void

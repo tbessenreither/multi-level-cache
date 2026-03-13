@@ -27,6 +27,15 @@
         <include>
             <directory suffix=".php">src</directory>
         </include>
+        <exclude>
+            <directory>src/CachedServiceGenerator/Service/MlcTemplates</directory>
+            <directory>src/Commands</directory>
+            <directory>src/Templates</directory>
+            <directory>src/Enum</directory>
+            <directory>src/Exception</directory>
+            <directory>src/Interface</directory>
+            <file>src/CopycatConfig.php</file>
+        </exclude>
     </source>
 
     <coverage ignoreDeprecatedCodeUnits="true" pathCoverage="false">

@@ -34,6 +34,14 @@ class PhpDocManipulatorServiceTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
+    public function testAddToDescriptionWithoutAtSection(): void
+    {
+        $docComment = "    /**\n     * Existing description.\n     * \n     */";
+        $result = PhpDocManipulatorService::add($docComment, 'Additional description.', 'description');
+        $expected = "    /**\n     * Existing description.\n     * Additional description.\n     */";
+        $this->assertEquals($expected, $result);
+    }
+
     public function testEmptyIndent(): void
     {
         $result = PhpDocManipulatorService::indent(false, 1);

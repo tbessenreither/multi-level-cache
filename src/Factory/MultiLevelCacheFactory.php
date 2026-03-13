@@ -38,10 +38,6 @@ class MultiLevelCacheFactory
     ) {
         try {
             $this->redisClient = RedisAdapter::createConnection($redisDsn);
-
-            if ($this->redisClient instanceof Redis && $this->redisClient->isConnected() === false) {
-                throw new CacheConnectionException('redisClient either not connected or invalid configuration');
-            }
         } catch (Throwable $e) {
             throw new CacheConnectionException('Could not connect to Redis', 0, $e);
         }
