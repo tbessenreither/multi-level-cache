@@ -1,7 +1,6 @@
 Index:
 - [MultiLevelCacheService](#multilevelcacheservice)
 - [MultiLevelCacheFactory](#multilevelcachefactory)
-- [InvalidatorService](#invalidatorservice)
 
 ---
 
@@ -42,6 +41,102 @@ $cacheService->get(
 	ttlSeconds: 600,
 );
 ```
+
+### getBulk
+
+`getBulk` is a convenient method to fetch multiple entries at once. Each result is cached individually and only the missing entries are passed to the source callable. This allows you to further optimize the fetching of data without sacrificing your cache size and hit rate.
+
+
+#### What it does:
+This is the core concept of `getBulk`.
+```mermaid
+flowchart TD
+	Request[Method Request]
+    Split(Split into single IDs)
+    Result[Add to result]
+    Todo[Add to fetch List]
+    FFS[Fetch from source]
+    Mapper[Map result to output format]
+    Return[Return result]
+
+    Id1[ID 1]
+    Id1C{is cached?}
+
+    Idn[ID n]
+    IdnC{is cached?}
+
+    Request --> Split
+
+    Split --> Id1
+    Id1 --> Id1C
+    Id1C -->|yes| Result
+    Id1C -->|no| Todo
+
+    Split --> Idn
+    Idn --> IdnC
+    IdnC -->|yes| Result
+    IdnC -->|no| Todo
+
+    Todo --> FFS
+    FFS --> Result
+    Result --> Mapper
+    Mapper --> Return
+```
+
+#### How it's done:
+To use the `getBulk` method you need to pass in two arguments.
+
+`methodCallObject` (`MethodCallObject`):
+
+This object contains all the information about what should be fetched. This means the `class`, `method` and `arguments` that should be used to fetch the data in case of a cache miss.
+If `class` of the `MethodCallObject` is a _string_, the MLC will try to call the Method as a static method. If it's an _object_, it will try to call it as a regular method.
+
+`mlcCacheableMethodAttribute` (`MlcCacheableMethod`):
+
+This object contains the cache configuration to be used as well as the `bulkConfig` that is needed for the `getBulk` method to work.
+
+`bulkConfig` (`BulkConfig`):
+
+This contains the `identifierSelector` that is used to deconstruct and reconstruct your result array. Currently this method supports _numeric_ and _associative_ arrays. The result mapping can be selected via the `listType` (`BulkListTypeEnum`) argument.
+
+
+Now let's put this all together in an example:
+
+```php
+ $result = $cache->getBulk(
+	methodCallObject: new MethodCallObject(
+		class: $this,
+		method: 'getTrueRandomStrings',
+		arguments: [['key1', 'key2', 'key3']],
+	),
+	mlcCacheableMethodAttribute: new MlcCacheableMethod(
+		ttlSeconds: 120,
+		bulkConfig: new BulkConfig(
+			identifierSelector: 'id',
+			listType: BulkListTypeEnum::ARRAY_ASSOC,
+		)
+	)
+);
+
+// [...]
+
+
+public function getTrueRandomStrings(array $keys): array
+{
+	var_dump('generating keys for', $keys);
+	$strings = [];
+	foreach ($keys as $key) {
+		$strings[$key] = [
+			'id' => $key,
+			'value' => bin2hex(random_bytes(16)),
+		];
+	}
+	return $strings;
+}
+```
+
+For details on how to use this with the `Cached Service Generator` go to the [Bulk Config Section](./mlc-cachedservicegenerator.md#bulkconfig).
+
 
 ### Set
 
@@ -266,33 +361,3 @@ Last but not least, the Cache Groups section. Here you can see the performance m
 This section is why you really want to set your `cacheGroupNamec` in the Factory when creating your cache service.
 
 ![MLC Cache Group Example](images/profiler_cache_groups.png)
-
-# InvalidatorService
-
-If you generate a Cached Service, one more benefit you get is the `InvalidatorService`.
-
-In short it allows you to easily invalidate cache entries for a given Service Class, or a specific method of a Service.
-
-So, how does it work?
-
-You inject the `InvalidatorService` into your Service and then you can call either the `invalidateCacheForClass` or the `invalidateCacheForMethod` method with the appropriate arguments.
-
-```php
-use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\InvalidatorService;
-
-readonly class MyService
-{
-	public function __construct(
-		private InvalidatorService $invalidatorService,
-	) {}
-
-	public function invalidateThings():void {
-		// This will invalidate all cache entries for the SomeService class, regardless of the method.
-		$this->invalidatorService->invalidateCacheForClass(SomeService::class);
-
-		// This will invalidate all cache entries for the someMethod of the SomeService class.
-		// All other cache entries for the SomeService class that are not related to someMethod will not be affected.
-		$this->invalidatorService->invalidateCacheForMethod(AnotherService::class, 'someMethod');
-	}
-}
-```
