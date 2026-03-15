@@ -66,6 +66,7 @@ MIT
 Awesome people who contributed to this package
 
 - [dsentker](https://github.com/dsentker)
+- [schwabwaldemar](https://github.com/schwabwaldemar)
 
 ## Honorable mentions
 thanks for support go to:
