@@ -177,14 +177,6 @@ class MultiLevelCacheService
                         'mlcCacheableMethodAttribute' => $mlcCacheableMethodAttribute,
                     ],
                 ));
-                $this->raiseIssue(ErrorEnum::ERROR_BULK_CONFIG_MISSING, new DataCollectorIssueOccurrenceDto(
-                    affectedCacheGroup: $this->cacheGroupName,
-                    affectedKeys: $keys,
-                    context: [
-                        'methodCallObject' => $methodCallObject,
-                        'mlcCacheableMethodAttribute' => $mlcCacheableMethodAttribute,
-                    ],
-                ));
 
                 throw new RuntimeException('BulkConfig is required for bulk operations');
             }
@@ -206,9 +198,6 @@ class MultiLevelCacheService
 
             // do one bulk call to source for all non-cached requests and cache them individually
             if (!empty($requestsToSource)) {
-                $sourceArguments = $methodCallObject->getArguments();
-                $sourceArguments[0] = $requestsToSource;
-                $methodCallObjectForSource = $methodCallObject->clone(arguments: $sourceArguments);
                 $sourceArguments = $methodCallObject->getArguments();
                 $sourceArguments[0] = $requestsToSource;
                 $methodCallObjectForSource = $methodCallObject->clone(arguments: $sourceArguments);
