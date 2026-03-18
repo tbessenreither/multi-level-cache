@@ -115,7 +115,6 @@ class FileOperationServiceTest extends TestCase
         require_once($this->testFilesRootPath . '/CorruptedNamespace.php');
         $this->expectException(RuntimeException::class);
         $result = FileOperationService::findRootForClass(CorruptedNamespace::class);
-        var_dump($result);
     }
 
     private function checkFileSyntax(string $file): void

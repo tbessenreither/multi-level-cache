@@ -155,7 +155,6 @@ class TestService implements TestServiceInterface
 
 
 #### bulkConfig
-See [Bulk Requests](#bulk-requests)
 
 Sometimes you have a method that accepts an array of ids that you want to fetch in a more performant way. Maybe by a bulk SQL query or via parallel CURL requests or other methods. Those requests are very inefficient to cache with just one entry because every change in the list will create a new cache key and therefore a separate entry in the cache.
 This means:
