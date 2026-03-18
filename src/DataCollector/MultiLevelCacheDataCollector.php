@@ -18,7 +18,7 @@ use Throwable;
 
 class MultiLevelCacheDataCollector extends DataCollector implements DataCollectorInterface
 {
-    private const LOW_HITRATE_NOTICE_THRESHOLD = 9;
+    private const int LOW_HITRATE_NOTICE_THRESHOLD = 9;
 
     private bool $isInitialized = false;
     private bool $processedAdditionalIssues = false;

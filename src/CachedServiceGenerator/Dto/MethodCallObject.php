@@ -44,7 +44,7 @@ class MethodCallObject
         return str_replace(['\\', ':', ' '], ['_', '-', ''], $this->getClass());
     }
 
-    public function getCallable(): ?callable
+    public function getCallable(): callable
     {
         return fn () => call_user_func_array([$this->class, $this->method], $this->arguments);
     }

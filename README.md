@@ -67,7 +67,8 @@ Awesome people who contributed to this package
 
 - [dsentker](https://github.com/dsentker)
 - [schwabwaldemar](https://github.com/schwabwaldemar)
+- [haraldpdl](https://github.com/haraldpdl)
 
 ## Honorable mentions
-thanks for support go to:
+thanks for support goes to:
 - [Robinson-Software-Development](https://github.com/robinson-software-development)
