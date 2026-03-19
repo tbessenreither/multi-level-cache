@@ -66,6 +66,23 @@ class TestServiceA
         return $values;
     }
 
+    public static function bulkTestFunctionWithFloatIdentifier(array $keys)
+    {
+        self::$sourceWasCalled = true;
+        self::$entriesRequestedFromSource = $keys;
+        $values = [];
+        $i = 1;
+        foreach ($keys as $key) {
+            $values[] = [
+                'key' => (float) $i + 0.5,
+                'value' => 'value for ' . $key,
+            ];
+            $i++;
+        }
+
+        return $values;
+    }
+
     public static function bulkTestFunctionWithWrongResponse(array $keys)
     {
         $response = [];

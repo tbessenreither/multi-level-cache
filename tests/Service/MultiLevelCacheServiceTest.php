@@ -534,6 +534,52 @@ class MultiLevelCacheServiceTest extends TestCase
         $this->assertEquals($expectedResults, $results, 'The results from the getBulk callable should match the expected results');
     }
 
+    public function testGetBulkWithFloatIdentifier(): void
+    {
+        $keys = ['key1', 'key2', 'key3'];
+        $expectedResults = [];
+        $i = 1;
+        foreach ($keys as $key) {
+            $id = $i;
+            $expectedResults[] = [
+                'key' => (float) $id + 0.5,
+                'value' => 'value for ' . $key,
+            ];
+            $i++;
+        }
+        TestServiceA::resetStatic();
+        $methodCallObject = new MethodCallObject(
+            class: TestServiceA::class,
+            method: 'bulkTestFunctionWithFloatIdentifier',
+            arguments: [$keys],
+        );
+
+
+        $service = new MultiLevelCacheService(
+            caches: [new InMemoryCacheService(5)],
+            writeL0OnSet: true,
+            stopwatch: null,
+            cacheDataCollector: null,
+            ttlRandomnessSeconds: 0,
+        );
+
+        $results = $service->getBulk(
+            methodCallObject: $methodCallObject,
+            mlcCacheableMethodAttribute: new MlcCacheableMethod(
+                ttlSeconds: 5,
+                bulkConfig: new BulkConfig(
+                    identifierSelector: 'key',
+                    listType: BulkListTypeEnum::ARRAY_NUMERIC,
+                ),
+            ),
+        );
+
+        $this->assertTrue(TestServiceA::$sourceWasCalled, 'The source callable should have been called since bulk is not configured');
+        $this->assertEquals($keys, TestServiceA::$entriesRequestedFromSource, 'The keys requested from the source should match the original keys');
+
+        $this->assertEquals($expectedResults, $results, 'The results from the getBulk callable should match the expected results');
+    }
+
     public function testGetBulkMisconfigured(): void
     {
         $keys = ['key1', 'key2', 'key3'];
@@ -741,6 +787,18 @@ class MultiLevelCacheServiceTest extends TestCase
         $statisticsObject = $methodReflection->invoke($service, 0);
         $this->assertInstanceOf(CacheStatistics::class, $statisticsObject, 'The getStatisticsObject method should return an instance of CacheStatistics');
         $this->assertIsArray($statisticsObject->getConfigData(), 'The config data in the statistics object should be an array');
+    }
+
+    public function testExceptionTransparencyRuntimeException(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $service = new MultiLevelCacheService(
+            caches: [new InMemoryCacheService(5)],
+        );
+
+        $service->get('testkey', function () {
+            throw new RuntimeException('Test exception');
+        }, 300);
     }
 
     private function fixYieldedConfiguration(array &$configuration)

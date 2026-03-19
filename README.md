@@ -57,6 +57,12 @@ For details on how to use the MLC Service and Factory directly.
 
 [MultiLevelCacheService and MultiLevelCacheFactory Documentation](documentation/mlc-service-and-factory.md)
 
+# FAQ
+
+We now have an FAQ with the most common questions on how to do things.
+
+[Look Here for all FAQ goodness](documentation/faq.md)
+
 ## License
 
 MIT

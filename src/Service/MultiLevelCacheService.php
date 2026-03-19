@@ -511,10 +511,10 @@ class MultiLevelCacheService
         return $this->cacheReadDisabled;
     }
 
-    private function cloneBulkMethodCallObjectWithNewIdentifier(MethodCallObject $methodCallObject, string|int $newIdentifier): MethodCallObject
+    private function cloneBulkMethodCallObjectWithNewIdentifier(MethodCallObject $methodCallObject, string|int|float $newIdentifier): MethodCallObject
     {
-        if (is_int($newIdentifier)) {
-            $newIdentifier = (string) $newIdentifier;
+        if (!is_string($newIdentifier)) {
+            $newIdentifier = (string)$newIdentifier;
         }
 
         $arguments = $methodCallObject->getArguments();
