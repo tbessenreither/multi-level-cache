@@ -15,7 +15,7 @@ use Tbessenreither\MultiLevelCache\Enum\WarningEnum;
 #[CoversClass(DataCollectorIssueDto::class)]
 #[UsesClass(WarningEnum::class)]
 #[UsesClass(DataCollectorIssueOccurrenceDto::class)]
-
+#[UsesClass(InfoEnum::class)]
 class DataCollectorIssueDtoTest extends TestCase
 {
     public function testGettersAndSetters(): void
