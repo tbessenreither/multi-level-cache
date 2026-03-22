@@ -115,4 +115,15 @@ class InMemoryCacheServiceTest extends TestCase
         $this->assertContains($key2, $cachedKeys);
     }
 
+    public function testClear(): void
+    {
+        $cache = new InMemoryCacheService(maxSize: 2);
+        $cache->set('key1', GetTestObject::getWrappedTestObject('data1', 10));
+
+        $cache->clear();
+
+        $this->assertNull($cache->get('key1'));
+        $this->assertEmpty($cache->getAllCacheKeys());
+    }
+
 }

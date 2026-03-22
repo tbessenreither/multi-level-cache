@@ -15,8 +15,11 @@ use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\InvalidatorService;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\KeyGeneratorService;
 use Tbessenreither\MultiLevelCache\Factory\MultiLevelCacheFactory;
+use Tbessenreither\MultiLevelCache\Factory\RedisClientFactory;
 use Tbessenreither\MultiLevelCache\Service\Implementations\DirectRedisCacheService;
+use Tbessenreither\MultiLevelCache\Service\RedisAbstractionService;
 use Tbessenreither\MultiLevelCache\Tests\CachedServiceGenerator\Service\TestSrc\TestServiceA;
+use Tbessenreither\MultiLevelCache\Tests\Factory\RedisClientFactoryTest;
 
 #[CoversClass(InvalidatorService::class)]
 #[UsesClass(MethodCallObject::class)]
@@ -24,6 +27,8 @@ use Tbessenreither\MultiLevelCache\Tests\CachedServiceGenerator\Service\TestSrc\
 #[UsesClass(MlcCacheableMethod::class)]
 #[UsesClass(KeyGeneratorService::class)]
 #[UsesClass(DirectRedisCacheService::class)]
+#[UsesClass(RedisAbstractionService::class)]
+#[UsesClass(RedisClientFactory::class)]
 class InvalidatorServiceTest extends TestCase
 {
     public function testClassInvalidation(): void
@@ -34,7 +39,7 @@ class InvalidatorServiceTest extends TestCase
             ['key:1', 'key:2'],
             []
         );
-        $directRedisCacheService = new DirectRedisCacheService($redisStub);
+        $directRedisCacheService = new DirectRedisCacheService(redisClientProvider: RedisClientFactoryTest::wrapClient($redisStub));
 
         $multiLevelCacheFactoryStub = $this->createStub(MultiLevelCacheFactory::class);
         $multiLevelCacheFactoryStub->method('getImplementationRedisWithPrefix')
@@ -50,7 +55,7 @@ class InvalidatorServiceTest extends TestCase
         $redisStub = $this->createStub(Redis::class);
         $redisStub->method('isConnected')->willReturn(true);
         $redisStub->method('scan')->willThrowException(new Exception('random error'));
-        $directRedisCacheService = new DirectRedisCacheService($redisStub);
+        $directRedisCacheService = new DirectRedisCacheService(redisClientProvider: RedisClientFactoryTest::wrapClient($redisStub));
 
         $multiLevelCacheFactoryStub = $this->createStub(MultiLevelCacheFactory::class);
         $multiLevelCacheFactoryStub->method('getImplementationRedisWithPrefix')
@@ -69,7 +74,7 @@ class InvalidatorServiceTest extends TestCase
             ['key:1', 'key:2'],
             []
         );
-        $directRedisCacheService = new DirectRedisCacheService($redisStub);
+        $directRedisCacheService = new DirectRedisCacheService(redisClientProvider: RedisClientFactoryTest::wrapClient($redisStub));
 
         $multiLevelCacheFactoryStub = $this->createStub(MultiLevelCacheFactory::class);
         $multiLevelCacheFactoryStub->method('getImplementationRedisWithPrefix')
@@ -85,7 +90,7 @@ class InvalidatorServiceTest extends TestCase
         $redisStub = $this->createStub(Redis::class);
         $redisStub->method('isConnected')->willReturn(true);
         $redisStub->method('scan')->willThrowException(new Exception('random error'));
-        $directRedisCacheService = new DirectRedisCacheService($redisStub);
+        $directRedisCacheService = new DirectRedisCacheService(redisClientProvider: RedisClientFactoryTest::wrapClient($redisStub));
 
         $multiLevelCacheFactoryStub = $this->createStub(MultiLevelCacheFactory::class);
         $multiLevelCacheFactoryStub->method('getImplementationRedisWithPrefix')

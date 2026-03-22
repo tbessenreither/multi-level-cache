@@ -6,11 +6,11 @@ namespace Tbessenreither\MultiLevelCache\Service\Implementations;
 
 use Exception;
 use Redis;
-use RedisCluster;
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
-use Tbessenreither\MultiLevelCache\Exception\CacheConnectionException;
 use Tbessenreither\MultiLevelCache\Interface\CacheInformationInterface;
 use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
+use Tbessenreither\MultiLevelCache\Interface\RedisClientProviderInterface;
+use Tbessenreither\MultiLevelCache\Service\RedisAbstractionService;
 
 /**
  * This should be the prefered way to connect to Redis for caching, as it avoids the overhead of our common cache adapter.
@@ -20,13 +20,14 @@ use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterf
  */
 class DirectRedisCacheService implements MultiLevelCacheImplementationInterface, CacheInformationInterface
 {
+    private const int DEFAULT_SCAN_COUNT = 10000;
+    private RedisAbstractionService $redisClient;
+
     public function __construct(
-        private Redis|RedisCluster $redisClient,
+        RedisClientProviderInterface $redisClientProvider,
         private ?string $keyPrefix = null,
     ) {
-        if ($this->redisClient instanceof Redis && $this->redisClient->isConnected() === false) {
-            throw new CacheConnectionException('Could not connect to Redis');
-        }
+        $this->redisClient = new RedisAbstractionService($redisClientProvider);
     }
 
     public function set(string $key, CacheObjectWrapperDto $object): void
@@ -70,7 +71,7 @@ class DirectRedisCacheService implements MultiLevelCacheImplementationInterface,
 
         $iterator = null;
         do {
-            $keys = $redisClient->scan($iterator, $deletePattern);
+            $keys = $redisClient->scan($iterator, $deletePattern, self::DEFAULT_SCAN_COUNT);
             foreach ($keys as $key) {
                 $redisClient->del($key);
             }
@@ -87,7 +88,7 @@ class DirectRedisCacheService implements MultiLevelCacheImplementationInterface,
         $iterator = null;
         $deletedItemCount = 0;
         do {
-            $keys = $redisClient->scan($iterator, $deletePattern);
+            $keys = $redisClient->scan($iterator, $deletePattern, self::DEFAULT_SCAN_COUNT);
             foreach ($keys as $key) {
                 $redisClient->del($key);
                 $deletedItemCount++;
@@ -99,23 +100,13 @@ class DirectRedisCacheService implements MultiLevelCacheImplementationInterface,
 
     public function getConfiguration(): array
     {
-        if ($this->redisClient instanceof RedisCluster) {
-            return [
-                'prefix' => $this->keyPrefix,
-                'cacheAdapter' => $this->redisClient::class,
-                'redisHost' => null,
-                'redisPort' => null,
-                'serialization' => 'php_serialize',
-            ];
-        } else {
-            return [
-                'prefix' => $this->keyPrefix,
-                'cacheAdapter' => $this->redisClient::class,
-                'redisHost' => $this->redisClient->getHost(),
-                'redisPort' => $this->redisClient->getPort(),
-                'serialization' => 'php_serialize',
-            ];
-        }
+        return [
+            'prefix' => $this->keyPrefix,
+            'cacheAdapter' => $this->redisClient::class,
+            'redisHost' => $this->redisClient->getHost(),
+            'redisPort' => $this->redisClient->getPort(),
+            'serialization' => 'php_serialize',
+        ];
     }
 
     private function getPrefixedRedisCacheKey(string $key): string

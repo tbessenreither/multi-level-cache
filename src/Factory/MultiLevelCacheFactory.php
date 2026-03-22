@@ -7,12 +7,12 @@ namespace Tbessenreither\MultiLevelCache\Factory;
 use Redis;
 use RedisCluster;
 use SensitiveParameter;
-use Symfony\Component\Cache\Adapter\RedisAdapter;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Stopwatch\Stopwatch;
 use Tbessenreither\MultiLevelCache\DataCollector\MultiLevelCacheDataCollector;
 use Tbessenreither\MultiLevelCache\Enum\CacheTypeEnum;
 use Tbessenreither\MultiLevelCache\Exception\CacheConnectionException;
+use Tbessenreither\MultiLevelCache\Interface\RedisClientProviderInterface;
 use Tbessenreither\MultiLevelCache\Service\Implementations\DirectRedisCacheService;
 use Tbessenreither\MultiLevelCache\Service\Implementations\InMemoryCacheService;
 use Tbessenreither\MultiLevelCache\Service\MultiLevelCacheService;
@@ -25,21 +25,26 @@ use Throwable;
  */
 class MultiLevelCacheFactory
 {
-    private Redis|RedisCluster $redisClient;
+    private RedisClientProviderInterface $redisClientProvider;
 
     public function __construct(
         #[Autowire('%env(REDIS_DSN)%')]
         #[SensitiveParameter]
-        readonly string $redisDsn,
-        private readonly Stopwatch $stopwatch,
-        private MultiLevelCacheDataCollector $cacheDataCollector,
+        readonly ?string $redisDsn = null,
+        private readonly ?Stopwatch $stopwatch = null,
+        private readonly ?MultiLevelCacheDataCollector $cacheDataCollector = null,
         #[Autowire('%env(defined:MLC_DISABLE_READ)%')]
         private bool $cacheReadDisabled = false,
+        Redis|RedisCluster|RedisClientProviderInterface|null $redisClient = null,
     ) {
         try {
-            $this->redisClient = RedisAdapter::createConnection($redisDsn);
+            $this->redisClientProvider = new RedisClientFactory(
+                redisClient: $redisClient instanceof Redis || $redisClient instanceof RedisCluster ? $redisClient : null,
+                redisDsn: $redisDsn,
+                redisClientProvider: $redisClient instanceof RedisClientProviderInterface ? $redisClient : null,
+            );
         } catch (Throwable $e) {
-            throw new CacheConnectionException('Could not connect to Redis', 0, $e);
+            throw new CacheConnectionException('Invalid Redis configuration given.', 0, $e);
         }
     }
 
@@ -66,7 +71,7 @@ class MultiLevelCacheFactory
         return new MultiLevelCacheService(
             caches: [
                 $this->getImplementationInMemory($inMemoryCacheMaxSize),
-                $this->getImplementationRedis($this->redisClient, $redisKeyPrefix),
+                $this->getImplementationRedis($this->redisClientProvider, $redisKeyPrefix),
             ],
             writeL0OnSet: $writeL0OnSet,
             stopwatch: $this->stopwatch,
@@ -100,7 +105,7 @@ class MultiLevelCacheFactory
     ): MultiLevelCacheService {
         return new MultiLevelCacheService(
             caches: [
-                $this->getImplementationRedis($this->redisClient, $redisKeyPrefix),
+                $this->getImplementationRedis($this->redisClientProvider, $redisKeyPrefix),
             ],
             writeL0OnSet: $writeL0OnSet,
             stopwatch: $this->stopwatch,
@@ -119,13 +124,19 @@ class MultiLevelCacheFactory
 
     public function getImplementationRedisWithPrefix(string $keyPrefix): DirectRedisCacheService
     {
-        return $this->getImplementationRedis($this->redisClient, $keyPrefix);
+        return $this->getImplementationRedis($this->redisClientProvider, $keyPrefix);
     }
 
-    public function getImplementationRedis(Redis|RedisCluster $redisClient, string $keyPrefix): DirectRedisCacheService
+    public function getImplementationRedis(Redis|RedisCluster|RedisClientProviderInterface $redisClient, string $keyPrefix): DirectRedisCacheService
     {
+        if ($redisClient instanceof RedisClientProviderInterface) {
+            $redisClientProvider = $redisClient;
+        } elseif ($redisClient instanceof Redis || $redisClient instanceof RedisCluster) {
+            $redisClientProvider = new RedisClientFactory(redisClient: $redisClient);
+        }
+
         return new DirectRedisCacheService(
-            redisClient: $redisClient,
+            redisClientProvider: $redisClientProvider,
             keyPrefix: $keyPrefix,
         );
     }
