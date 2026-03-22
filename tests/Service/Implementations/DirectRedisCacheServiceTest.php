@@ -5,18 +5,22 @@ declare(strict_types=1);
 namespace Tbessenreither\MultiLevelCache\Tests\Service\Implementations;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Redis;
 use RedisCluster;
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
 use Tbessenreither\MultiLevelCache\Exception\CacheConnectionException;
+use Tbessenreither\MultiLevelCache\Factory\RedisClientFactory;
 use Tbessenreither\MultiLevelCache\Service\Implementations\DirectRedisCacheService;
+use Tbessenreither\MultiLevelCache\Service\RedisAbstractionService;
+use Tbessenreither\MultiLevelCache\Tests\Factory\RedisClientFactoryTest;
 
 #[CoversClass(DirectRedisCacheService::class)]
 #[CoversClass(CacheObjectWrapperDto::class)]
-
-
+#[CoversClass(RedisAbstractionService::class)]
+#[UsesClass(RedisClientFactory::class)]
 class DirectRedisCacheServiceTest extends TestCase
 {
     private MockObject&Redis $redisClient;
@@ -45,7 +49,7 @@ class DirectRedisCacheServiceTest extends TestCase
         $this->setupRedisMockService('set', $prefix . ':' . $key);
 
         $cache = new DirectRedisCacheService(
-            redisClient: $this->redisClient,
+            redisClientProvider: RedisClientFactoryTest::wrapClient($this->redisClient),
             keyPrefix: $prefix,
         );
 
@@ -60,7 +64,7 @@ class DirectRedisCacheServiceTest extends TestCase
         $this->setupRedisMockService('get', $prefix . ':' . $key);
 
         $cache = new DirectRedisCacheService(
-            redisClient: $this->redisClient,
+            redisClientProvider: RedisClientFactoryTest::wrapClient($this->redisClient),
             keyPrefix: $prefix,
         );
 
@@ -77,7 +81,7 @@ class DirectRedisCacheServiceTest extends TestCase
         $this->setupRedisMockService('delete', $prefix . ':' . $key);
 
         $cache = new DirectRedisCacheService(
-            redisClient: $this->redisClient,
+            redisClientProvider: RedisClientFactoryTest::wrapClient($this->redisClient),
             keyPrefix: $prefix,
         );
 
@@ -96,7 +100,7 @@ class DirectRedisCacheServiceTest extends TestCase
             ->willReturn(false);
 
         $cache = new DirectRedisCacheService(
-            redisClient: $this->redisClient,
+            redisClientProvider: RedisClientFactoryTest::wrapClient($this->redisClient),
             keyPrefix: $prefix,
         );
 
@@ -116,7 +120,7 @@ class DirectRedisCacheServiceTest extends TestCase
             ->willReturn('invalid_serialized_data');
 
         $cache = new DirectRedisCacheService(
-            redisClient: $this->redisClient,
+            redisClientProvider: RedisClientFactoryTest::wrapClient($this->redisClient),
             keyPrefix: $prefix,
         );
 
@@ -136,7 +140,7 @@ class DirectRedisCacheServiceTest extends TestCase
             ->willThrowException(new \Exception('Redis error'));
 
         $cache = new DirectRedisCacheService(
-            redisClient: $this->redisClient,
+            redisClientProvider: RedisClientFactoryTest::wrapClient($this->redisClient),
             keyPrefix: $prefix,
         );
 
@@ -156,7 +160,7 @@ class DirectRedisCacheServiceTest extends TestCase
         $this->expectExceptionMessage('Could not connect to Redis');
 
         new DirectRedisCacheService(
-            redisClient: $this->redisClient,
+            redisClientProvider: RedisClientFactoryTest::wrapClient($this->redisClient),
             keyPrefix: 'test_prefix',
         );
     }
@@ -173,7 +177,7 @@ class DirectRedisCacheServiceTest extends TestCase
             ->willReturn(6379);
 
         $cache = new DirectRedisCacheService(
-            redisClient: $this->redisClient,
+            redisClientProvider: RedisClientFactoryTest::wrapClient($this->redisClient),
             keyPrefix: 'test_prefix',
         );
 
@@ -194,9 +198,11 @@ class DirectRedisCacheServiceTest extends TestCase
     public function testGetConfigurationCluster(): void
     {
         $redisClient = $this->createStub(RedisCluster::class);
+        $redisClient->method('_masters')->willReturn([['127.0.0.1', 6379]]);
+        $redisClient->method('ping')->willReturn(true);
 
         $cache = new DirectRedisCacheService(
-            redisClient: $redisClient,
+            redisClientProvider: RedisClientFactoryTest::wrapClient($redisClient),
             keyPrefix: 'test_prefix',
         );
 
@@ -210,6 +216,9 @@ class DirectRedisCacheServiceTest extends TestCase
         $this->assertArrayHasKey('serialization', $config);
         $this->assertEquals('test_prefix', $config['prefix']);
         $this->assertEquals('php_serialize', $config['serialization']);
+        $this->assertEquals('127.0.0.1', $config['redisHost']);
+        $this->assertEquals(6379, $config['redisPort']);
+
     }
 
     public function testSetUsesUnprefixedKeyWhenKeyPrefixIsEmpty(): void
@@ -225,7 +234,7 @@ class DirectRedisCacheServiceTest extends TestCase
             );
 
         $cache = new DirectRedisCacheService(
-            redisClient: $this->redisClient,
+            redisClientProvider: RedisClientFactoryTest::wrapClient($this->redisClient),
             keyPrefix: null, // Null key prefix
         );
 
@@ -239,7 +248,7 @@ class DirectRedisCacheServiceTest extends TestCase
             ->method('scan');
 
         $cache = new DirectRedisCacheService(
-            redisClient: $this->redisClient,
+            redisClientProvider: RedisClientFactoryTest::wrapClient($this->redisClient),
             keyPrefix: null, // Null key prefix
         );
 
@@ -261,7 +270,7 @@ class DirectRedisCacheServiceTest extends TestCase
             ->method('del');
 
         $cache = new DirectRedisCacheService(
-            redisClient: $this->redisClient,
+            redisClientProvider: RedisClientFactoryTest::wrapClient($this->redisClient),
             keyPrefix: 'test_prefix',
         );
 
@@ -283,7 +292,7 @@ class DirectRedisCacheServiceTest extends TestCase
             ->method('del');
 
         $cache = new DirectRedisCacheService(
-            redisClient: $this->redisClient,
+            redisClientProvider: RedisClientFactoryTest::wrapClient($this->redisClient),
             keyPrefix: 'test_prefix',
         );
 
@@ -294,7 +303,7 @@ class DirectRedisCacheServiceTest extends TestCase
     public function testGetCachedKeys(): void
     {
         $cache = new DirectRedisCacheService(
-            redisClient: $this->redisClient,
+            redisClientProvider: RedisClientFactoryTest::wrapClient($this->redisClient),
             keyPrefix: 'test_prefix',
         );
 

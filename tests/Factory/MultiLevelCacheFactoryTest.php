@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tbessenreither\MultiLevelCache\Tests\Factory;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Redis;
 use ReflectionClass;
@@ -14,15 +15,19 @@ use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
 use Tbessenreither\MultiLevelCache\Enum\CacheTypeEnum;
 use Tbessenreither\MultiLevelCache\Exception\CacheConnectionException;
 use Tbessenreither\MultiLevelCache\Factory\MultiLevelCacheFactory;
+use Tbessenreither\MultiLevelCache\Factory\RedisClientFactory;
 use Tbessenreither\MultiLevelCache\Service\Implementations\DirectRedisCacheService;
 use Tbessenreither\MultiLevelCache\Service\Implementations\InMemoryCacheService;
 use Tbessenreither\MultiLevelCache\Service\MultiLevelCacheService;
+use Tbessenreither\MultiLevelCache\Service\RedisAbstractionService;
 
 #[CoversClass(MultiLevelCacheFactory::class)]
 #[CoversClass(InMemoryCacheService::class)]
 #[CoversClass(DirectRedisCacheService::class)]
 #[CoversClass(MultiLevelCacheService::class)]
 #[CoversClass(CacheObjectWrapperDto::class)]
+#[UsesClass(RedisAbstractionService::class)]
+#[UsesClass(RedisClientFactory::class)]
 
 
 class MultiLevelCacheFactoryTest extends TestCase
@@ -79,10 +84,8 @@ class MultiLevelCacheFactoryTest extends TestCase
     public function testConstructorThrowsWhenRedisNotConnected(): void
     {
         $this->expectException(CacheConnectionException::class);
-        $stopwatchMock = $this->createStub(Stopwatch::class);
-        $collectorMock = $this->createStub(MultiLevelCacheDataCollector::class);
 
-        new MultiLevelCacheFactory(redisDsn: 'redis://127.0.0.1:9999', stopwatch: $stopwatchMock, cacheDataCollector: $collectorMock);
+        new MultiLevelCacheFactory();
     }
 
     public function testGeneratorByCacheTypeEnum(): void
@@ -118,9 +121,9 @@ class MultiLevelCacheFactoryTest extends TestCase
 
         $rc = new ReflectionClass(MultiLevelCacheFactory::class);
 
-        $prop = $rc->getProperty('redisClient');
+        $prop = $rc->getProperty('redisClientProvider');
         $prop->setAccessible(true);
-        $prop->setValue($factory, $redisMock);
+        $prop->setValue($factory, RedisClientFactoryTest::wrapClient($redisMock));
 
         $prop = $rc->getProperty('redisDsn');
         $prop->setAccessible(true);

@@ -27,6 +27,7 @@ use Tbessenreither\MultiLevelCache\Dto\BulkConfig;
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
 use Tbessenreither\MultiLevelCache\Dto\DataCollectorIssueOccurrenceDto;
 use Tbessenreither\MultiLevelCache\Enum\BulkListTypeEnum;
+use Tbessenreither\MultiLevelCache\Factory\RedisClientFactory;
 use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
 use Tbessenreither\MultiLevelCache\Service\BulkMapperService;
 use Tbessenreither\MultiLevelCache\Service\Implementations\InMemoryCacheService;
@@ -46,6 +47,7 @@ use TypeError;
 #[UsesClass(BulkConfig::class)]
 #[UsesClass(BulkMapperService::class)]
 #[UsesClass(DataCollectorIssueOccurrenceDto::class)]
+#[UsesClass(RedisClientFactory::class)]
 class MultiLevelCacheServiceTest extends TestCase
 {
     private CacheObjectWrapperDto $testObj;
