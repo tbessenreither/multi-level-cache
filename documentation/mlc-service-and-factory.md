@@ -227,6 +227,14 @@ The `MultiLevelCacheFactory` is responsible for creating instances of the `Multi
 
 You can inject the Factory via DI into your service and then create a `MultiLevelCacheService` with the following default configurations:
 
+## Constructor
+
+you can pass in either the `$redisDsn` (autowired) or a `$redisClient` (`Redis`, `RedisCluster` or `RedisClientProviderInterface`) directly to the constructor of the Factory. If both are provided, the Factory will use the Redis Client and ignore the DSN.
+
+Especially the `RedisClientProviderInterface` is useful if you want to provide a shared Redis Client that is used by multiple services so you only use one lazy connection instead of one per cache service.
+
+Best practice is to autowire your custom Client Provider to `$redisClient` via `services.yaml` and then it will be automatically injected into the Factory.
+
 ## createByType
 
 This method allows you to create a `MultiLevelCacheService` by one of the given presets. The Presets are defined in the `CacheTypeEnum` and are the following:
