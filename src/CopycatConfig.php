@@ -31,40 +31,36 @@ class CopycatConfig implements CopycatConfigInterface
             bundleClassName: MultiLevelCacheBundle::class,
         );
 
+        $envVarRedisDsn = new EnvVar(
+            name: 'REDIS_DSN',
+            value: 'redis://redis:6379',
+            description: 'The DSN for the Redis server used by the Multi-Level Cache Bundle. Only needed if you don\'t autowire >tbessenreither.multi_level_cache.redis_client_provider<.',
+        );
+        $envVarDisableRead = new EnvVar(
+            name: 'MLC_DISABLE_READ',
+            isFlag: true,
+            description: 'When present, the Multi-Level-Cache will not perform cache reads and always call the source, but it will still perform cache writes. This can be useful for testing or debugging purposes.',
+        );
+        $envVarCollectEnhancedData = new EnvVar(
+            name: 'MLC_COLLECT_ENHANCED_DATA',
+            value: true,
+            description: 'When true the profiler will collect extra data for statistics and debugging. This will take more time and memory, so it should only be enabled in development environments.',
+        );
+
         $copycat->envAdd(
             target: EnvTargetEnum::DOT_EXAMPLE,
             entries: [
-                new EnvVar(
-                    name: 'REDIS_DSN',
-                    value: 'redis://redis:6379',
-                    description: 'The DSN for the Redis server used by the Multi-Level Cache Bundle.',
-                ),
-                new EnvVar(
-                    name: 'MLC_DISABLE_READ',
-                    isFlag: true,
-                    description: 'When present, the Multi-Level-Cache will not perform cache reads and always call the source, but it will still perform cache writes. This can be useful for testing or debugging purposes.',
-                ),
-                new EnvVar(
-                    name: 'MLC_COLLECT_ENHANCED_DATA',
-                    value: true,
-                    description: 'When true the profiler will collect extra data for statistics and debugging. This will take more time and memory, so it should only be enabled in development environments.',
-                ),
+                $envVarRedisDsn,
+                $envVarDisableRead,
+                $envVarCollectEnhancedData,
             ],
             overwrite: true,
         );
         $copycat->envAdd(
             target: EnvTargetEnum::DOT_LOCAL,
             entries: [
-                new EnvVar(
-                    name: 'REDIS_DSN',
-                    value: 'redis://redis:6379',
-                    description: 'The DSN for the Redis server used by the Multi-Level Cache Bundle.',
-                ),
-                new EnvVar(
-                    name: 'MLC_COLLECT_ENHANCED_DATA',
-                    value: true,
-                    description: 'When true the profiler will collect extra data for statistics and debugging. This will take more time and memory, so it should only be enabled in development environments.',
-                ),
+                $envVarRedisDsn,
+                $envVarCollectEnhancedData,
             ],
             overwrite: false,
         );
