@@ -148,7 +148,7 @@ class DirectRedisCacheServiceTest extends TestCase
         $this->assertNull($result);
     }
 
-    public function testConstructorThrowsExceptionWhenRedisNotConnected(): void
+    public function testThrowExceptionWhenRedisNotConnected(): void
     {
         $this->redisClient = $this->createMock(Redis::class);
         $this->redisClient
@@ -159,10 +159,11 @@ class DirectRedisCacheServiceTest extends TestCase
         $this->expectException(CacheConnectionException::class);
         $this->expectExceptionMessage('Could not connect to Redis');
 
-        new DirectRedisCacheService(
+        $service = new DirectRedisCacheService(
             redisClientProvider: RedisClientFactoryTest::wrapClient($this->redisClient),
             keyPrefix: 'test_prefix',
         );
+        $service->get('some_key'); // Trigger lazy connection check
     }
 
     public function testGetConfiguration(): void

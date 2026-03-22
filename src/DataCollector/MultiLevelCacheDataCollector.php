@@ -317,6 +317,7 @@ class MultiLevelCacheDataCollector extends DataCollector implements DataCollecto
      * This method processes the collected data and raises issues based on it's findings.
      * As it's only ever ran during the rendering of the profiler page and does not create additional data it can skip the isCollecting and isEnhancedDataCollectionEnabled checks.
      */
+    //Todo: This method needs coverage!
     private function processAdditionalIssues(): void
     {
         if ($this->processedAdditionalIssues === true) {
