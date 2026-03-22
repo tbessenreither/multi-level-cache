@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tbessenreither\MultiLevelCache\Tests\Commands\TestFiles\Service;
+
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Attribute\MlcCacheableService;
+use Tbessenreither\MultiLevelCache\Tests\Commands\TestFiles\Interface\Service\InterfaceA;
+use Tbessenreither\MultiLevelCache\Tests\Commands\TestFiles\Interface\Service\InterfaceB;
+use Tbessenreither\MultiLevelCache\Tests\Commands\TestFiles\Interface\Service\InterfaceC;
+
+#[MlcCacheableService(additionalInterface: InterfaceC::class)]
+class ServiceWithInterfaces implements InterfaceA, InterfaceB
+{
+    public function methodA(): string
+    {
+        return 'methodA';
+    }
+
+    public function methodB(): string
+    {
+        return 'methodB';
+    }
+}

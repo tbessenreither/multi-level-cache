@@ -10,76 +10,106 @@ use PHPUnit\Framework\TestCase;
 #[CoversNothing]
 class MakeTest extends TestCase
 {
-    private string $originalServiceTemplate = __DIR__ . '/TestFiles/Service/TargetClassTemplate.txt';
-    private string $originalServiceClass = 'Tbessenreither\MultiLevelCache\Tests\Commands\TestFiles\Service\TargetClass';
-    private string $originalServiceFile = __DIR__ . '/TestFiles/Service/TargetClass.php';
-    private string $cachedServiceFile = __DIR__ . '/TestFiles/Service/TargetClassCached.php';
-    private string $interfaceFile = __DIR__ . '/TestFiles/Interface/Service/TargetClassInterface.php';
+    private string $serviceDirectory = __DIR__ . '/TestFiles/Service';
+    private string $interfaceDirectory = __DIR__ . '/TestFiles/Interface/Service';
+
+    private array $keepInterfaces = [
+        'InterfaceA.php',
+        'InterfaceB.php',
+        'InterfaceC.php',
+    ];
 
     public function setUp(): void
     {
         parent::setUp();
 
-        if (file_exists($this->originalServiceFile)) {
-            unlink($this->originalServiceFile);
-        }
-        if (file_exists($this->cachedServiceFile)) {
-            unlink($this->cachedServiceFile);
-        }
-        if (file_exists($this->interfaceFile)) {
-            unlink($this->interfaceFile);
-            rmdir(__DIR__ . '/TestFiles/Interface/Service');
-            rmdir(__DIR__ . '/TestFiles/Interface');
-        }
-
-        copy($this->originalServiceTemplate, $this->originalServiceFile);
+        $this->cleanupFiles();
+        $this->templatesToFiles();
     }
 
     public function tearDown(): void
     {
         parent::tearDown();
 
-        if (file_exists($this->originalServiceFile)) {
-            unlink($this->originalServiceFile);
-        }
-        if (file_exists($this->cachedServiceFile)) {
-            unlink($this->cachedServiceFile);
-        }
-        if (file_exists($this->interfaceFile)) {
-            unlink($this->interfaceFile);
-        }
+        $this->cleanupFiles();
     }
 
     public function testMake(): void
     {
+        $originalServiceFile = $this->serviceDirectory . '/TargetClass.php';
+        $cachedServiceFile = $this->serviceDirectory . '/TargetClassCached.php';
+        $interfaceFile = $this->interfaceDirectory . '/TargetClassInterface.php';
+
         $makePath = realpath(__DIR__ . '/../../src/Commands/make.php');
         $this->assertNotFalse($makePath);
 
-        $classDotNotation = str_replace('\\', '.', $this->originalServiceClass);
+        $classDotNotation = str_replace('\\', '.', 'Tbessenreither\MultiLevelCache\Tests\Commands\TestFiles\Service\TargetClass');
 
         $command = sprintf('php %s %s 2>&1', $makePath, '--service=' . $classDotNotation);
         exec($command, $output, $resultCode);
         $this->assertSame(0, $resultCode, implode("\n", $output));
 
-        $this->checkFileSyntax($this->originalServiceFile);
-        $this->checkFileSyntax($this->cachedServiceFile);
-        $this->checkFileSyntax($this->interfaceFile);
+        $this->checkFileSyntax($originalServiceFile);
+        $this->checkFileSyntax($cachedServiceFile);
+        $this->checkFileSyntax($interfaceFile);
 
         $outputString = implode(PHP_EOL, $output);
 
         $this->assertStringContainsString('Cached service generated successfully.', $outputString);
-        $this->assertStringContainsString($this->cachedServiceFile, $outputString);
-        $this->assertStringContainsString($this->interfaceFile, $outputString);
+        $this->assertStringContainsString($cachedServiceFile, $outputString);
+        $this->assertStringContainsString($interfaceFile, $outputString);
 
-        $cachedFileContent = file_get_contents($this->cachedServiceFile);
+        $cachedFileContent = file_get_contents($cachedServiceFile);
         $this->assertNotFalse($cachedFileContent);
         $this->assertStringContainsString('public function exampleMethod(): void', $cachedFileContent);
         $this->assertStringContainsString('public function exampleMethodWithArguments(array $thing, bool $bool, int $int, string $string): void', $cachedFileContent);
 
-        $interfaceFileContent = file_get_contents($this->interfaceFile);
+        $interfaceFileContent = file_get_contents($interfaceFile);
         $this->assertNotFalse($interfaceFileContent);
         $this->assertStringContainsString('public function exampleMethod(): void', $interfaceFileContent);
         $this->assertStringContainsString('public function exampleMethodWithArguments(array $thing, bool $bool, int $int, string $string): void', $interfaceFileContent);
+
+    }
+
+    public function testMakeWithInterfaces(): void
+    {
+        $makePath = realpath(__DIR__ . '/../../src/Commands/make.php');
+        $this->assertNotFalse($makePath);
+
+        $classDotNotation = str_replace('\\', '.', 'Tbessenreither\MultiLevelCache\Tests\Commands\TestFiles\Service\ServiceWithInterfaces');
+        $cachedServiceFile = $this->serviceDirectory . '/ServiceWithInterfacesCached.php';
+        $interfaceFile = $this->interfaceDirectory . '/ServiceWithInterfacesInterface.php';
+
+        $command = sprintf('php %s %s 2>&1', $makePath, '--service=' . $classDotNotation);
+        exec($command, $output, $resultCode);
+        $this->assertSame(0, $resultCode, implode("\n", $output));
+
+        $this->checkFileSyntax($cachedServiceFile);
+        $this->checkFileSyntax($interfaceFile);
+
+        $outputString = implode(PHP_EOL, $output);
+
+        $this->assertStringContainsString('Cached service generated successfully.', $outputString);
+        $this->assertStringContainsString($cachedServiceFile, $outputString);
+        $this->assertStringContainsString($interfaceFile, $outputString);
+
+        $cachedFileContent = file_get_contents($cachedServiceFile);
+        $this->assertNotFalse($cachedFileContent);
+
+        $lines = explode(PHP_EOL, $cachedFileContent);
+        $lineWithInterfaces = null;
+        foreach ($lines as $line) {
+            if (str_contains($line, 'class ServiceWithInterfacesCached implements')) {
+                $lineWithInterfaces = $line;
+
+                break;
+            }
+        }
+        $this->assertNotNull($lineWithInterfaces, 'Line with interfaces not found.');
+        $this->assertStringContainsString('ServiceWithInterfacesCached', $lineWithInterfaces);
+        $this->assertStringContainsString('InterfaceA', $lineWithInterfaces);
+        $this->assertStringContainsString('InterfaceB', $lineWithInterfaces);
+        $this->assertStringContainsString('InterfaceC', $lineWithInterfaces);
 
     }
 
@@ -92,6 +122,55 @@ class MakeTest extends TestCase
         exec(sprintf('php -l %s 2>&1', escapeshellarg($file)), $output, $resultCode);
 
         $this->assertSame(0, $resultCode, implode("\n", $output));
+    }
+
+    private function cleanupFiles(): void
+    {
+        $files = scandir($this->serviceDirectory);
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+            if (!str_ends_with($file, 'Template.txt')) {
+                unlink($this->serviceDirectory . '/' . $file);
+            }
+        }
+
+        $files = scandir($this->interfaceDirectory);
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+            if (!in_array($file, $this->keepInterfaces, true)) {
+                unlink($this->interfaceDirectory . '/' . $file);
+            }
+        };
+    }
+
+    private function templatesToFiles(): void
+    {
+        $files = scandir($this->serviceDirectory);
+        if ($files === false) {
+            $this->fail("Failed to read service directory.");
+        }
+
+        foreach ($files as $file) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+            $templateFilePath = $this->serviceDirectory . '/' . $file;
+            if (!str_ends_with($file, 'Template.txt')) {
+                unlink($templateFilePath);
+
+                continue;
+            }
+            $realName = str_replace('Template.txt', '.php', $file);
+            $realPath = $this->serviceDirectory . '/' . $realName;
+            if (file_exists($realPath)) {
+                unlink($realPath);
+            }
+            copy($templateFilePath, $realPath);
+        }
     }
 
 }

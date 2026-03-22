@@ -83,8 +83,6 @@ class MakeCachedServiceService
                 ]
             )
         );
-        $useLines = array_unique($useLines);
-        sort($useLines);
 
         $dynamicMethods = $this->generateDynamicMethodsCode($methods, $useLines);
 
@@ -97,6 +95,18 @@ class MakeCachedServiceService
             $useLines[] = "use {$mlcCacheableServiceAttribute->getAdditionalInterface()};";
             $interfaces[] = $this->cleanupFqcnBasedOnUseLines($useLines, '\\' . $mlcCacheableServiceAttribute->getAdditionalInterface());
         }
+        $reflectionInterfaces = $reflection->getInterfaceNames();
+        foreach ($reflectionInterfaces as $reflectionInterface) {
+            if (!in_array($reflectionInterface, $interfaces, true)) {
+                $useLines[] = "use {$reflectionInterface};";
+                $interfaces[] = $this->cleanupFqcnBasedOnUseLines($useLines, '\\' . $reflectionInterface);
+            }
+        }
+
+        $useLines = array_unique($useLines);
+        sort($useLines);
+        $interfaces = array_unique($interfaces);
+        sort($interfaces);
 
         $interfaceCode = RenderTemplateService::render('Interface/InterfaceWrapper', [
             'InterfaceNamespace' => $interfaceNamespace,

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "042f548a2c30879ae580c8a6944d9bf3",
+    "content-hash": "443abf8c2cc47825d62d016f690d64e3",
     "packages": [
         {
             "name": "psr/cache",
@@ -5257,16 +5257,16 @@
         },
         {
             "name": "tbessenreither/copycat",
-            "version": "v0.7.3",
+            "version": "v0.8.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/tbessenreither/copycat.git",
-                "reference": "4079552263406c82c86d4ca40ac558964ef349e3"
+                "reference": "d46db17b8b521e119ae561911525d1b76c4f1b72"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/tbessenreither/copycat/zipball/4079552263406c82c86d4ca40ac558964ef349e3",
-                "reference": "4079552263406c82c86d4ca40ac558964ef349e3",
+                "url": "https://api.github.com/repos/tbessenreither/copycat/zipball/d46db17b8b521e119ae561911525d1b76c4f1b72",
+                "reference": "d46db17b8b521e119ae561911525d1b76c4f1b72",
                 "shasum": ""
             },
             "require": {
@@ -5294,9 +5294,9 @@
             "description": "tool for copying files and directories from bundles to your project",
             "support": {
                 "issues": "https://github.com/tbessenreither/copycat/issues",
-                "source": "https://github.com/tbessenreither/copycat/tree/v0.7.3"
+                "source": "https://github.com/tbessenreither/copycat/tree/v0.8.4"
             },
-            "time": "2026-03-09T20:20:29+00:00"
+            "time": "2026-03-19T09:04:44+00:00"
         },
         {
             "name": "theseer/tokenizer",

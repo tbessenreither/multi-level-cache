@@ -68,6 +68,7 @@ We've added the Attribute to the Endpoint we want to cache. And now we need to r
 1. It will create a `TestServiceInterface` for the `TestService`.
 2. The Generator will create a wrapper under the name `TestServiceCached` that implements the `TestServiceInterface` to ensure compatibility
 3. It will add the `TestServiceInterface` to the original Class
+4. All Interfaces implemented by the original `TestService` will also automatically be implemented by the `TestServiceCached` class. This is to ensure that the cached version can be used as a drop in replacement without any issues.
 
 The Cache Wrapper is stored in the same directory as your Original `TestService` postfixed with `Cached` giving you `TestServiceCached`.
 
@@ -257,6 +258,8 @@ It has the following parameters, all of them are optional:
 Sometimes you need to have the created Cached Service to implement an additional Interface. For example when you're using autowiring or dependency injection. This parameter allows you to specify that interface and it will be added to the generated class.
 
 This does not affect the generated `TestServiceInterface`. It is still generated and implemented.
+
+Please note that the Cached Service will already implement all interfaces of the Source Service. So you only need to use this if you want to add an interface that is not implemented by the Original Service.
 
 #### dataVersion
 
