@@ -229,11 +229,24 @@ You can inject the Factory via DI into your service and then create a `MultiLeve
 
 ## Constructor
 
-you can pass in either the `$redisDsn` (autowired) or a `$redisClient` (`Redis`, `RedisCluster` or `RedisClientProviderInterface`) directly to the constructor of the Factory. If both are provided, the Factory will use the Redis Client and ignore the DSN.
+If you wish to pass your own Redis Client, you can do so by using the `redisClient` argument.
 
-Especially the `RedisClientProviderInterface` is useful if you want to provide a shared Redis Client that is used by multiple services so you only use one lazy connection instead of one per cache service.
+While you can autowire your own Redis Client or `RedisClientProviderInterface` into the Factory it is recommended to use the `tbessenreither.multi_level_cache.redis_client_provider` alias to inject your Provider.
 
-Best practice is to autowire your custom Client Provider to `$redisClient` via `services.yaml` and then it will be automatically injected into the Factory.
+This allows you to create the connection lazily and also allows you to reuse the same client over multiple instances.
+
+```php
+#[AsAlias('tbessenreither.multi_level_cache.redis_client_provider')]
+class RedisClientFactory implements RedisClientProviderInterface
+{
+	public function getRedisClient(): Redis|RedisCluster
+	{
+		// create and return your Redis or RedisCluster client here
+	}
+
+}
+```
+
 
 ## createByType
 

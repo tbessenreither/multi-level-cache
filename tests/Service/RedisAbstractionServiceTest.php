@@ -41,21 +41,24 @@ class RedisAbstractionServiceTest extends TestCase
     {
         $this->expectException(CacheConnectionException::class);
 
-        new RedisAbstractionService(RedisClientFactoryTest::wrapClient($this->getRedisNotConnected()));
+        $service = new RedisAbstractionService(RedisClientFactoryTest::wrapClient($this->getRedisNotConnected()));
+        $service->get('somekey'); // Trigger lazy connection check
     }
 
     public function testConstructorRedisClusterNotConnected(): void
     {
         $this->expectException(CacheConnectionException::class);
 
-        new RedisAbstractionService(RedisClientFactoryTest::wrapClient($this->getRedisClusterNotConnected()));
+        $service = new RedisAbstractionService(RedisClientFactoryTest::wrapClient($this->getRedisClusterNotConnected()));
+        $service->get('somekey'); // Trigger lazy connection check
     }
 
     public function testConstructorRedisClusterNotResponding(): void
     {
         $this->expectException(CacheConnectionException::class);
 
-        new RedisAbstractionService(RedisClientFactoryTest::wrapClient($this->getRedisClusterNotResponding()));
+        $service = new RedisAbstractionService(RedisClientFactoryTest::wrapClient($this->getRedisClusterNotResponding()));
+        $service->get('somekey'); // Trigger lazy connection check
     }
 
     public function testScanRedis(): void

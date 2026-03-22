@@ -35,6 +35,7 @@ class MultiLevelCacheFactory
         private readonly ?MultiLevelCacheDataCollector $cacheDataCollector = null,
         #[Autowire('%env(defined:MLC_DISABLE_READ)%')]
         private bool $cacheReadDisabled = false,
+        #[Autowire(service: 'tbessenreither.multi_level_cache.redis_client_provider')]
         Redis|RedisCluster|RedisClientProviderInterface|null $redisClient = null,
     ) {
         try {

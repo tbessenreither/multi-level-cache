@@ -7,6 +7,7 @@ namespace Tbessenreither\MultiLevelCache\Service\Implementations;
 use Exception;
 use Redis;
 use Tbessenreither\MultiLevelCache\Dto\CacheObjectWrapperDto;
+use Tbessenreither\MultiLevelCache\Exception\CacheConnectionException;
 use Tbessenreither\MultiLevelCache\Interface\CacheInformationInterface;
 use Tbessenreither\MultiLevelCache\Interface\MultiLevelCacheImplementationInterface;
 use Tbessenreither\MultiLevelCache\Interface\RedisClientProviderInterface;
@@ -49,6 +50,8 @@ class DirectRedisCacheService implements MultiLevelCacheImplementationInterface,
             }
 
             return $object;
+        } catch (CacheConnectionException $e) {
+            throw $e;
         } catch (Exception) {
             return null;
         }

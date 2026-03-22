@@ -6,6 +6,7 @@ namespace Tbessenreither\MultiLevelCache\Service;
 
 use BadMethodCallException;
 use Redis;
+use RedisCluster;
 use RedisClusterException;
 use RedisException;
 use Tbessenreither\MultiLevelCache\Exception\CacheConnectionException;
@@ -20,17 +21,18 @@ use Throwable;
  */
 class RedisAbstractionService
 {
+    private ?bool $isCluster = null;
+    private bool $connectionChecked = false;
+    private ?bool $isConnected = null;
+
     public function __construct(
         private RedisClientProviderInterface $redisClientProvider,
     ) {
-        if ($this->isConnected() === false) {
-            throw new CacheConnectionException('Could not connect to Redis');
-        }
     }
 
     public function isConnected(): bool
     {
-        if ($this->redisClientProvider->getRedisClient() instanceof Redis) {
+        if (!$this->isCluster()) {
             return $this->redisClientProvider->getRedisClient()->isConnected();
         }
 
@@ -52,8 +54,8 @@ class RedisAbstractionService
 
     public function scan(?int &$iterator, string $pattern, int $count): array|false
     {
-        if ($this->redisClientProvider->getRedisClient() instanceof Redis) {
-            return $this->redisClientProvider->getRedisClient()->scan($iterator, $pattern, $count);
+        if (!$this->isCluster()) {
+            return $this->getClient()->scan($iterator, $pattern, $count);
         }
 
         $allKeys = [];
@@ -63,7 +65,7 @@ class RedisAbstractionService
             $nodeIterator = 0;
 
             do {
-                $keys = $this->redisClientProvider->getRedisClient()->scan($nodeIterator, $master, $pattern, $count);
+                $keys = $this->getClient()->scan($nodeIterator, $master, $pattern, $count);
 
                 if ($keys !== false) {
                     $allKeys = array_merge($allKeys, $keys);
@@ -78,8 +80,8 @@ class RedisAbstractionService
 
     public function flushAll(): Redis|bool
     {
-        if ($this->redisClientProvider->getRedisClient() instanceof Redis) {
-            return $this->redisClientProvider->getRedisClient()->flushAll();
+        if (!$this->isCluster()) {
+            return $this->getClient()->flushAll();
         }
 
         $masters = $this->_masters();
@@ -109,8 +111,8 @@ class RedisAbstractionService
 
     public function flushDb(?bool $sync = null): Redis|bool
     {
-        if ($this->redisClientProvider->getRedisClient() instanceof Redis) {
-            return $this->redisClientProvider->getRedisClient()->flushDb($sync);
+        if (!$this->isCluster()) {
+            return $this->getClient()->flushDb($sync);
         }
 
         $masters = $this->_masters();
@@ -140,8 +142,8 @@ class RedisAbstractionService
 
     public function getHost(): string
     {
-        if ($this->redisClientProvider->getRedisClient() instanceof Redis) {
-            return $this->redisClientProvider->getRedisClient()->getHost();
+        if (!$this->isCluster()) {
+            return $this->getClient()->getHost();
         }
 
         $masters = $this->_masters();
@@ -154,8 +156,8 @@ class RedisAbstractionService
 
     public function getPort(): int
     {
-        if ($this->redisClientProvider->getRedisClient() instanceof Redis) {
-            return $this->redisClientProvider->getRedisClient()->getPort();
+        if (!$this->isCluster()) {
+            return $this->getClient()->getPort();
         }
 
         $masters = $this->_masters();
@@ -168,17 +170,17 @@ class RedisAbstractionService
 
     public function _masters(): array
     {
-        if ($this->redisClientProvider->getRedisClient() instanceof Redis) {
-            return [[$this->redisClientProvider->getRedisClient()->getHost(), $this->redisClientProvider->getRedisClient()->getPort()]];
+        if (!$this->isCluster()) {
+            return [[$this->getClient()->getHost(), $this->getClient()->getPort()]];
         } else {
-            return $this->redisClientProvider->getRedisClient()->_masters();
+            return $this->getClient()->_masters();
         }
     }
 
     public function hexpire(string $key, int $ttl, array $fields): array|false
     {
         try {
-            return $this->redisClientProvider->getRedisClient()->hexpire($key, $ttl, $fields);
+            return $this->getClient()->hexpire($key, $ttl, $fields);
         } catch (Throwable) {
             return false;
         }
@@ -189,10 +191,32 @@ class RedisAbstractionService
      */
     public function __call($name, $arguments)
     {
-        if (method_exists($this->redisClientProvider->getRedisClient(), $name)) {
-            return $this->redisClientProvider->getRedisClient()->$name(...$arguments);
+        if (method_exists($this->getClient(), $name)) {
+            return $this->getClient()->$name(...$arguments);
         } else {
             throw new BadMethodCallException("Method $name does not exist on Redis client");
         }
+    }
+
+    private function isCluster(): bool
+    {
+        if ($this->isCluster === null) {
+            $this->isCluster = $this->getClient() instanceof RedisCluster;
+        }
+
+        return $this->isCluster;
+    }
+
+    private function getClient(): Redis|RedisCluster
+    {
+        if (!$this->connectionChecked) {
+            $this->connectionChecked = true;
+            $this->isConnected = $this->isConnected();
+        }
+        if ($this->isConnected === false) {
+            throw new CacheConnectionException('Could not connect to Redis server.');
+        }
+
+        return $this->redisClientProvider->getRedisClient();
     }
 }
