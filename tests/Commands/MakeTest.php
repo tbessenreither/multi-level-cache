@@ -6,6 +6,7 @@ namespace Tbessenreither\MultiLevelCache\Tests\Commands;
 
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\KeyGeneratorService;
 
 #[CoversNothing]
 class MakeTest extends TestCase
@@ -69,6 +70,7 @@ class MakeTest extends TestCase
         $this->assertStringContainsString('public function exampleMethod(): void', $interfaceFileContent);
         $this->assertStringContainsString('public function exampleMethodWithArguments(array $thing, bool $bool, int $int, string $string): void', $interfaceFileContent);
 
+        $this->assertStringContainsString("CACHE_KEY_PREFIX = '" . KeyGeneratorService::CACHED_SERVICE_GENERATOR_KEY_PREFIX . ":", $cachedFileContent);
     }
 
     public function testMakeWithInterfaces(): void

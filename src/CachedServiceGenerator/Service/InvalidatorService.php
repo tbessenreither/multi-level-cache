@@ -19,25 +19,47 @@ class InvalidatorService
         $this->directRedisCacheService = $multiLevelCacheFactory->getImplementationRedisWithPrefix('mlc');
     }
 
+    public function invalidateEverything(): bool
+    {
+        return $this->deleteByPattern('*');
+    }
+
+    public function invalidateCacheForNamespace(string $namespace): bool
+    {
+        $completedWithoutError = true;
+        $invalidateKeyPatterns = [
+            KeyGeneratorService::namespaceToKeyString($namespace, null, true) . ':*',
+            KeyGeneratorService::namespaceToKeyString($namespace, null, false) . ':*',
+        ];
+        foreach ($invalidateKeyPatterns as $pattern) {
+
+            $result = $this->deleteByPattern($pattern);
+            if ($result === false) {
+                $completedWithoutError = false;
+            }
+        }
+
+        return $completedWithoutError;
+    }
+
     public function invalidateCacheForClass(string $classString): bool
     {
-        try {
-            $generateKey = KeyGeneratorService::getKeyPatternForClass(new MethodCallObject($classString, '', []));
+        $generateKey = KeyGeneratorService::getKeyPatternForClass(new MethodCallObject($classString, '', []));
 
-            $this->directRedisCacheService->deleteByPattern($generateKey);
-
-            return true;
-        } catch (Throwable $e) {
-            return false;
-        }
+        return $this->deleteByPattern($generateKey);
     }
 
     public function invalidateCacheForMethod(string $classString, string $method): bool
     {
-        try {
-            $generateKey = KeyGeneratorService::getKeyPatternForMethod(new MethodCallObject($classString, $method, []));
+        $generateKey = KeyGeneratorService::getKeyPatternForMethod(new MethodCallObject($classString, $method, []));
 
-            $this->directRedisCacheService->deleteByPattern($generateKey);
+        return $this->deleteByPattern($generateKey);
+    }
+
+    public function deleteByPattern(string $pattern): bool
+    {
+        try {
+            $this->directRedisCacheService->deleteByPattern($pattern);
 
             return true;
         } catch (Throwable $e) {

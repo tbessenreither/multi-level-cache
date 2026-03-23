@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto;
 
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\KeyGeneratorService;
+
 class MethodCallObject
 {
     public function __construct(
@@ -41,7 +43,7 @@ class MethodCallObject
 
     public function getCachePrefix(): string
     {
-        return str_replace(['\\', ':', ' '], ['_', '-', ''], $this->getClass());
+        return KeyGeneratorService::namespaceToKeyString($this->getClass());
     }
 
     public function getCallable(): callable

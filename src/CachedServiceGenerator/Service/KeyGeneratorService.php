@@ -14,6 +14,8 @@ use Throwable;
 
 class KeyGeneratorService
 {
+    public const string CACHED_SERVICE_GENERATOR_KEY_PREFIX = 'CachedService';
+
     /**
      * @var array<string, string>
      */
@@ -26,6 +28,20 @@ class KeyGeneratorService
     public static function getKey(MethodCallObject $methodCallObject, bool $throw = true): string
     {
         return self::defaultKeyGenerator($methodCallObject);
+    }
+
+    public static function namespaceToKeyString(string $fqcn, ?string $method = null, bool $addCsgPrefix = false): string
+    {
+        $parts = [];
+        if ($addCsgPrefix) {
+            $parts[] = self::CACHED_SERVICE_GENERATOR_KEY_PREFIX;
+        }
+        $parts[] = str_replace(['\\', ':', ' '], ['_', '-', ''], $fqcn);
+        if ($method) {
+            $parts[] = $method;
+        }
+
+        return implode(':', $parts);
     }
 
     public static function getKeyPatternForMethod(MethodCallObject $methodCallObject): string
