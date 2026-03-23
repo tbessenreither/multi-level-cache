@@ -21,13 +21,7 @@ class InvalidatorService
 
     public function invalidateEverything(): bool
     {
-        try {
-            $this->deleteByPattern('*');
-
-            return true;
-        } catch (Throwable $e) {
-            return false;
-        }
+        return $this->deleteByPattern('*');
     }
 
     public function invalidateCacheForNamespace(string $namespace): bool
@@ -38,9 +32,9 @@ class InvalidatorService
             KeyGeneratorService::namespaceToKeyString($namespace, null, false) . ':*',
         ];
         foreach ($invalidateKeyPatterns as $pattern) {
-            try {
-                $this->deleteByPattern($pattern);
-            } catch (Throwable) {
+
+            $result = $this->deleteByPattern($pattern);
+            if ($result === false) {
                 $completedWithoutError = false;
             }
         }
@@ -50,28 +44,16 @@ class InvalidatorService
 
     public function invalidateCacheForClass(string $classString): bool
     {
-        try {
-            $generateKey = KeyGeneratorService::getKeyPatternForClass(new MethodCallObject($classString, '', []));
+        $generateKey = KeyGeneratorService::getKeyPatternForClass(new MethodCallObject($classString, '', []));
 
-            $this->deleteByPattern($generateKey);
-
-            return true;
-        } catch (Throwable $e) {
-            return false;
-        }
+        return $this->deleteByPattern($generateKey);
     }
 
     public function invalidateCacheForMethod(string $classString, string $method): bool
     {
-        try {
-            $generateKey = KeyGeneratorService::getKeyPatternForMethod(new MethodCallObject($classString, $method, []));
+        $generateKey = KeyGeneratorService::getKeyPatternForMethod(new MethodCallObject($classString, $method, []));
 
-            $this->deleteByPattern($generateKey);
-
-            return true;
-        } catch (Throwable $e) {
-            return false;
-        }
+        return $this->deleteByPattern($generateKey);
     }
 
     public function deleteByPattern(string $pattern): bool
