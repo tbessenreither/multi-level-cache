@@ -6,10 +6,13 @@ namespace Tbessenreither\MultiLevelCache\Tests\CachedServiceGenerator\Attribute;
 
 use Closure;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Dto\MethodCallObject;
+use Tbessenreither\MultiLevelCache\CachedServiceGenerator\Service\KeyGeneratorService;
 
 #[CoversClass(MethodCallObject::class)]
+#[UsesClass(KeyGeneratorService::class)]
 class MethodCallObjectTest extends TestCase
 {
     public function testSetupAndGetter(): void

@@ -26,10 +26,11 @@ use Throwable;
  *
  * Cache enabled wrapper for Service /*{ServiceName}*/.
  *
- * This Wrapper provides all public methods from the origin service and was generated using the make command
- * You can regenerate/update using php vendor/tbessenreither/multi-level-cache/bin/make --service=/*{ClassDotSeparated}*/
- * Or you can update all services with php vendor/tbessenreither/multi-level-cache/bin/update
+ * This Wrapper provides all public methods from the origin service and was generated using the make command.
+ * You can regenerate/update using php vendor/tbessenreither/multi-level-cache/bin/make --service=/*{ClassDotSeparated}*/.
+ * Or you can update all services with php vendor/tbessenreither/multi-level-cache/bin/update.
  * @codeCoverageIgnore
+ * @mixin /*{ServiceName}*/
  */
 #[MlcCachedService(
     originalServiceClass: /*{ServiceName}*/::class,
@@ -37,7 +38,7 @@ use Throwable;
 )]
 class /*{ServiceName}*/Cached implements /*{InterfacesString}*/
 {
-    public const CACHE_KEY_PREFIX = 'CachedService:/*{ClassUnderscoreSeparated}*/';
+    public const CACHE_KEY_PREFIX = '/*{CacheKeyPrefix}*/';
 
     /**
      * @var array<string, MlcCacheableMethod|null>

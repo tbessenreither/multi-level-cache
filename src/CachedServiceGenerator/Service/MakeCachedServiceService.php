@@ -129,6 +129,7 @@ class MakeCachedServiceService
         $classCode = RenderTemplateService::render('Class/CachedService', [
             'ServiceNamespace' => $namespace,
             'ServiceName' => $shortName,
+            'CacheKeyPrefix' => KeyGeneratorService::namespaceToKeyString(fqcn:$class, addCsgPrefix:true),
             'ClassDotSeparated' => $classDotSeparated,
             'ClassUnderscoreSeparated' => $classUnderscoreSeparated,
             'ClassHyphenSeparated' => $classHyphenSeparated,

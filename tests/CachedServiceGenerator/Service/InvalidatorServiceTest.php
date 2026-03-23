@@ -31,6 +31,53 @@ use Tbessenreither\MultiLevelCache\Tests\Factory\RedisClientFactoryTest;
 #[UsesClass(RedisClientFactory::class)]
 class InvalidatorServiceTest extends TestCase
 {
+    public function testInvalidateEverything(): void
+    {
+        $redisMock = $this->createMock(Redis::class);
+        $redisMock->method('isConnected')->willReturn(true);
+        $redisMock->method('scan')->willReturnOnConsecutiveCalls(
+            ['key:1', 'key:2'],
+            []
+        );
+        $redisMock
+            ->expects($this->atLeastOnce())
+            ->method('del');
+
+        $directRedisCacheService = new DirectRedisCacheService(redisClientProvider: RedisClientFactoryTest::wrapClient($redisMock));
+
+        $multiLevelCacheFactoryStub = $this->createStub(MultiLevelCacheFactory::class);
+        $multiLevelCacheFactoryStub->method('getImplementationRedisWithPrefix')
+            ->willReturn($directRedisCacheService);
+
+        $invalidatorService = new InvalidatorService($multiLevelCacheFactoryStub);
+        $result = $invalidatorService->invalidateEverything();
+        $this->assertTrue($result);
+    }
+
+    public function testInvalidateEverythingWithError(): void
+    {
+        $redisMock = $this->createMock(Redis::class);
+        $redisMock->method('isConnected')->willReturn(true);
+        $redisMock->method('scan')->willReturnOnConsecutiveCalls(
+            ['key:1', 'key:2'],
+            []
+        );
+        $redisMock
+            ->expects($this->atLeastOnce())
+            ->method('del')
+            ->willThrowException(new Exception('random error'));
+
+        $directRedisCacheService = new DirectRedisCacheService(redisClientProvider: RedisClientFactoryTest::wrapClient($redisMock));
+
+        $multiLevelCacheFactoryStub = $this->createStub(MultiLevelCacheFactory::class);
+        $multiLevelCacheFactoryStub->method('getImplementationRedisWithPrefix')
+            ->willReturn($directRedisCacheService);
+
+        $invalidatorService = new InvalidatorService($multiLevelCacheFactoryStub);
+        $result = $invalidatorService->invalidateEverything();
+        $this->assertFalse($result);
+    }
+
     public function testClassInvalidation(): void
     {
         $redisStub = $this->createStub(Redis::class);
@@ -98,6 +145,49 @@ class InvalidatorServiceTest extends TestCase
 
         $invalidatorService = new InvalidatorService($multiLevelCacheFactoryStub);
         $result = $invalidatorService->invalidateCacheForMethod(TestServiceA::class, 'testMethod');
+        $this->assertFalse($result);
+    }
+
+    public function testNamespaceInvalidation(): void
+    {
+        $redisMock = $this->createMock(Redis::class);
+        $redisMock->method('isConnected')->willReturn(true);
+        $redisMock->method('scan')->willReturnOnConsecutiveCalls(
+            ['key:1', 'key:2'],
+            []
+        );
+        $redisMock->expects($this->atLeastOnce())
+            ->method('del');
+        $directRedisCacheService = new DirectRedisCacheService(redisClientProvider: RedisClientFactoryTest::wrapClient($redisMock));
+
+        $multiLevelCacheFactoryStub = $this->createStub(MultiLevelCacheFactory::class);
+        $multiLevelCacheFactoryStub->method('getImplementationRedisWithPrefix')
+            ->willReturn($directRedisCacheService);
+
+        $invalidatorService = new InvalidatorService($multiLevelCacheFactoryStub);
+        $result = $invalidatorService->invalidateCacheForNamespace(TestServiceA::class);
+        $this->assertTrue($result);
+    }
+
+    public function testNamespaceInvalidationWithError(): void
+    {
+        $redisMock = $this->createMock(Redis::class);
+        $redisMock->method('isConnected')->willReturn(true);
+        $redisMock->method('scan')->willReturnOnConsecutiveCalls(
+            ['key:1', 'key:2'],
+            []
+        );
+        $redisMock->expects($this->atLeastOnce())
+            ->method('del')
+            ->willThrowException(new Exception('random error'));
+        $directRedisCacheService = new DirectRedisCacheService(redisClientProvider: RedisClientFactoryTest::wrapClient($redisMock));
+
+        $multiLevelCacheFactoryStub = $this->createStub(MultiLevelCacheFactory::class);
+        $multiLevelCacheFactoryStub->method('getImplementationRedisWithPrefix')
+            ->willReturn($directRedisCacheService);
+
+        $invalidatorService = new InvalidatorService($multiLevelCacheFactoryStub);
+        $result = $invalidatorService->invalidateCacheForNamespace(TestServiceA::class);
         $this->assertFalse($result);
     }
 }

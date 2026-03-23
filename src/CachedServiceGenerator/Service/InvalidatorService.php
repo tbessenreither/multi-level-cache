@@ -19,12 +19,41 @@ class InvalidatorService
         $this->directRedisCacheService = $multiLevelCacheFactory->getImplementationRedisWithPrefix('mlc');
     }
 
+    public function invalidateEverything(): bool
+    {
+        try {
+            $this->deleteByPattern('*');
+
+            return true;
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+
+    public function invalidateCacheForNamespace(string $namespace): bool
+    {
+        $completedWithoutError = true;
+        $invalidateKeyPatterns = [
+            KeyGeneratorService::namespaceToKeyString($namespace, null, true) . ':*',
+            KeyGeneratorService::namespaceToKeyString($namespace, null, false) . ':*',
+        ];
+        foreach ($invalidateKeyPatterns as $pattern) {
+            try {
+                $this->deleteByPattern($pattern);
+            } catch (Throwable) {
+                $completedWithoutError = false;
+            }
+        }
+
+        return $completedWithoutError;
+    }
+
     public function invalidateCacheForClass(string $classString): bool
     {
         try {
             $generateKey = KeyGeneratorService::getKeyPatternForClass(new MethodCallObject($classString, '', []));
 
-            $this->directRedisCacheService->deleteByPattern($generateKey);
+            $this->deleteByPattern($generateKey);
 
             return true;
         } catch (Throwable $e) {
@@ -37,7 +66,18 @@ class InvalidatorService
         try {
             $generateKey = KeyGeneratorService::getKeyPatternForMethod(new MethodCallObject($classString, $method, []));
 
-            $this->directRedisCacheService->deleteByPattern($generateKey);
+            $this->deleteByPattern($generateKey);
+
+            return true;
+        } catch (Throwable $e) {
+            return false;
+        }
+    }
+
+    public function deleteByPattern(string $pattern): bool
+    {
+        try {
+            $this->directRedisCacheService->deleteByPattern($pattern);
 
             return true;
         } catch (Throwable $e) {
