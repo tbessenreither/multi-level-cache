@@ -25,10 +25,11 @@ class MakeCachedServiceService
     }
 
     /**
-     * @return array<{interface: string, class: string}>
+     * @return array<{interface: string, class: string, issues: array<string>}>
      */
     public function generateCachedService(string $class, ?string $cachedClass = null): array
     {
+        $encounteredIssues = [];
         $reflection = new ReflectionClass($class);
 
         $classDotSeparated = str_replace('\\', '.', $class); # Used for CLI notation
@@ -95,12 +96,19 @@ class MakeCachedServiceService
             $useLines[] = "use {$mlcCacheableServiceAttribute->getAdditionalInterface()};";
             $interfaces[] = $this->cleanupFqcnBasedOnUseLines($useLines, '\\' . $mlcCacheableServiceAttribute->getAdditionalInterface());
         }
-        $reflectionInterfaces = $reflection->getInterfaceNames();
-        foreach ($reflectionInterfaces as $reflectionInterface) {
-            if (!in_array($reflectionInterface, $interfaces, true)) {
-                $useLines[] = "use {$reflectionInterface};";
-                $interfaces[] = $this->cleanupFqcnBasedOnUseLines($useLines, '\\' . $reflectionInterface);
-            }
+
+        $transferableInterfaces = $this->getTransferableInterfacesFromReflectionClass(
+            reflection: $reflection,
+            skipInterfaces: array_merge(
+                $interfaces, // skip all interfaces that are defined by other means
+                [$interfaceClass], // this ensures the interface itself will not be added to itself
+            ),
+            issues: $encounteredIssues
+        );
+
+        foreach ($transferableInterfaces as $transferableInterface) {
+            $useLines[] = "use {$transferableInterface};";
+            $interfaces[] = $this->cleanupFqcnBasedOnUseLines($useLines, '\\' . $transferableInterface);
         }
 
         $useLines = array_unique($useLines);
@@ -124,7 +132,8 @@ class MakeCachedServiceService
         );
 
         $useLines[] = "use {$interfaceClass};";
-        sort($useLines);
+        $interfaces = array_unique($interfaces);
+        sort($interfaces);
 
         $classCode = RenderTemplateService::render('Class/CachedService', [
             'ServiceNamespace' => $namespace,
@@ -149,6 +158,8 @@ class MakeCachedServiceService
             class: $class,
             interface: $interfaceClass,
         );
+
+        $generatedFiles['issues'] = $encounteredIssues;
 
         return $generatedFiles;
     }
@@ -390,6 +401,40 @@ class MakeCachedServiceService
             'methods' => $methodCode,
             'interfaces' => $interfaceCode,
         ];
+    }
+
+    /**
+     * @param string[] $skipInterfaces
+     * @return string[] List of interface names that should be implemented by the cached service, excluding the ones in $skipInterfaces
+     */
+    private function getTransferableInterfacesFromReflectionClass(ReflectionClass $reflection, array $skipInterfaces, array &$issues = []): array
+    {
+        $interfaces = [];
+        foreach ($reflection->getInterfaceNames() as $interfaceName) {
+            if (
+                in_array($interfaceName, $interfaces, true)
+                || in_array('\\' . $interfaceName, $interfaces, true)
+                || in_array($interfaceName, $skipInterfaces, true)
+                || in_array('\\' . $interfaceName, $skipInterfaces, true)
+            ) {
+                continue;
+            }
+
+            $interfaceReflection = new ReflectionClass($interfaceName);
+            $interfaceMethods = $interfaceReflection->getMethods(ReflectionMethod::IS_PUBLIC);
+            foreach ($interfaceMethods as $method) {
+                if ($method->isConstructor()) {
+                    $issues[] = "Skipped interface '{$interfaceName}' because it contains a constructor.";
+
+                    continue 2;
+                }
+            }
+
+
+            $interfaces[] = $interfaceName;
+        }
+
+        return $interfaces;
     }
 
     /**
