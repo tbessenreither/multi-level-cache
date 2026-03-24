@@ -73,6 +73,13 @@ try {
             ['Interface', $targetFile['interface']],
         ],
     );
+
+    if (!empty($targetFile['issues'])) {
+        PrintTools::error("However, some issues were encountered during generation:");
+        foreach ($targetFile['issues'] as $issue) {
+            PrintTools::line("- " . $issue);
+        }
+    }
     echo PHP_EOL . PHP_EOL;
 
 } catch (Exception $e) {

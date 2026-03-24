@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tbessenreither\MultiLevelCache\Tests\Commands\TestFiles\Service;
+
+use Tbessenreither\MultiLevelCache\Tests\Commands\TestFiles\Interface\Service\ConstructorInterface;
+
+class ServiceWithConstructorInterface implements ConstructorInterface
+{
+    public function __construct(private string $string)
+    {
+
+    }
+    public function methodA(): string
+    {
+        return 'methodA';
+    }
+
+    public function methodB(): string
+    {
+        return 'methodB';
+    }
+}
