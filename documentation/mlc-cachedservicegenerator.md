@@ -77,7 +77,6 @@ The `TestServiceInterface` will be put into the appropriate Interface directory.
 Example Output of the `ddev mlc-make` command:
 ![mlc-make Command Output Example](images/mlc-make.png)
 
-
 ### Using the cached service
 
 You basically have two options here.
@@ -98,6 +97,15 @@ If any service can't be updated (There are some reasons why this might happen) i
 
 Example Output of the `ddev mlc-update` command:
 ![mlc-update Command Output Example](images/mlc-update.png)
+
+## More about how the MLC generates the cached service
+
+### Automatic Interface Transfer
+
+The CSG will automatically transfer all interfaces implemented by the original service to the cached version. This means that if your original service implements `SomeInterface`, the cached version will also implement `SomeInterface` without you having to do anything extra.
+
+#### Exceptions:
+- Interfaces that define a constructor are not transferred as the cached version needs to have a different constructor signature. No way around this one.
 
 
 ## Advanced Usage

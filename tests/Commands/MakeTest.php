@@ -15,6 +15,7 @@ class MakeTest extends TestCase
     private string $interfaceDirectory = __DIR__ . '/TestFiles/Interface/Service';
 
     private array $keepInterfaces = [
+        'ConstructorInterface.php',
         'InterfaceA.php',
         'InterfaceB.php',
         'InterfaceC.php',
@@ -113,6 +114,44 @@ class MakeTest extends TestCase
         $this->assertStringContainsString('InterfaceB', $lineWithInterfaces);
         $this->assertStringContainsString('InterfaceC', $lineWithInterfaces);
 
+    }
+
+    public function testMakeWithConstructorInterfaces(): void
+    {
+        $makePath = realpath(__DIR__ . '/../../src/Commands/make.php');
+        $this->assertNotFalse($makePath);
+
+        $classDotNotation = str_replace('\\', '.', 'Tbessenreither\MultiLevelCache\Tests\Commands\TestFiles\Service\ServiceWithConstructorInterface');
+        $cachedServiceFile = $this->serviceDirectory . '/ServiceWithConstructorInterfaceCached.php';
+        $interfaceFile = $this->interfaceDirectory . '/ServiceWithConstructorInterfaceInterface.php';
+
+        $command = sprintf('php %s %s 2>&1', $makePath, '--service=' . $classDotNotation);
+        exec($command, $output, $resultCode);
+        $this->assertSame(0, $resultCode, implode("\n", $output));
+
+        $this->checkFileSyntax($cachedServiceFile);
+        $this->checkFileSyntax($interfaceFile);
+
+        $outputString = implode(PHP_EOL, $output);
+
+        $this->assertStringContainsString('Cached service generated successfully.', $outputString);
+        $this->assertStringContainsString($cachedServiceFile, $outputString);
+        $this->assertStringContainsString($interfaceFile, $outputString);
+
+        $cachedFileContent = file_get_contents($cachedServiceFile);
+        $this->assertNotFalse($cachedFileContent);
+
+        $lines = explode(PHP_EOL, $cachedFileContent);
+        $lineWithInterfaces = null;
+        foreach ($lines as $line) {
+            if (str_contains($line, 'class ServiceWithConstructorInterfaceCached implements')) {
+                $lineWithInterfaces = $line;
+
+                break;
+            }
+        }
+        $this->assertNotNull($lineWithInterfaces, 'Line with interfaces not found.');
+        $this->assertStringNotContainsString(' ConstructorInterface', $lineWithInterfaces, 'ConstructorInterface should not be implemented by the cached class.');
     }
 
     private function checkFileSyntax(string $file): void
