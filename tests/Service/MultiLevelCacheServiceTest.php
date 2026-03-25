@@ -761,7 +761,6 @@ class MultiLevelCacheServiceTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         $methodReleflection = new ReflectionMethod(MultiLevelCacheService::class, 'getCacheImplementation');
-        $methodReleflection->setAccessible(true);
         $service = new MultiLevelCacheService(
             caches: [new InMemoryCacheService(5)],
         );
@@ -785,7 +784,6 @@ class MultiLevelCacheServiceTest extends TestCase
         );
 
         $methodReflection = new ReflectionMethod(MultiLevelCacheService::class, 'getStatisticsObject');
-        $methodReflection->setAccessible(true);
         $statisticsObject = $methodReflection->invoke($service, 0);
         $this->assertInstanceOf(CacheStatistics::class, $statisticsObject, 'The getStatisticsObject method should return an instance of CacheStatistics');
         $this->assertIsArray($statisticsObject->getConfigData(), 'The config data in the statistics object should be an array');

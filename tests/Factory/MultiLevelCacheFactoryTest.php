@@ -122,23 +122,18 @@ class MultiLevelCacheFactoryTest extends TestCase
         $rc = new ReflectionClass(MultiLevelCacheFactory::class);
 
         $prop = $rc->getProperty('redisClientProvider');
-        $prop->setAccessible(true);
         $prop->setValue($factory, RedisClientFactoryTest::wrapClient($redisMock));
 
         $prop = $rc->getProperty('redisDsn');
-        $prop->setAccessible(true);
         $prop->setValue($factory, 'redis://localhost');
 
         $prop = $rc->getProperty('stopwatch');
-        $prop->setAccessible(true);
         $prop->setValue($factory, $stopwatchMock);
 
         $prop = $rc->getProperty('cacheDataCollector');
-        $prop->setAccessible(true);
         $prop->setValue($factory, $collectorMock);
 
         $prop = $rc->getProperty('cacheReadDisabled');
-        $prop->setAccessible(true);
         $prop->setValue($factory, false);
 
         return $factory;

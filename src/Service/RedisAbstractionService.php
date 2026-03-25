@@ -84,29 +84,7 @@ class RedisAbstractionService
             return $this->getClient()->flushAll();
         }
 
-        $masters = $this->_masters();
-
-        $flushSuccess = true;
-        foreach ($masters as $master) {
-            $host = $master[0];
-            $port = $master[1];
-
-            $tempClient = new Redis();
-
-            try {
-                if ($tempClient->connect($host, $port, 0.5)) {
-                    $tempClient->flushAll();
-                }
-            } catch (RedisException) {
-                $flushSuccess = false;
-            } finally {
-                if ($tempClient->isConnected()) {
-                    $tempClient->close();
-                }
-            }
-        }
-
-        return $flushSuccess;
+        return $this->flushCluster(true);
     }
 
     public function flushDb(?bool $sync = null): Redis|bool
@@ -115,29 +93,7 @@ class RedisAbstractionService
             return $this->getClient()->flushDb($sync);
         }
 
-        $masters = $this->_masters();
-
-        $flushSuccess = true;
-        foreach ($masters as $master) {
-            $host = $master[0];
-            $port = $master[1];
-
-            $tempClient = new Redis();
-
-            try {
-                if ($tempClient->connect($host, $port, 0.5)) {
-                    $tempClient->flushDB();
-                }
-            } catch (RedisException) {
-                $flushSuccess = false;
-            } finally {
-                if ($tempClient->isConnected()) {
-                    $tempClient->close();
-                }
-            }
-        }
-
-        return $flushSuccess;
+        return $this->flushCluster(false);
     }
 
     public function getHost(): string
@@ -218,5 +174,45 @@ class RedisAbstractionService
         }
 
         return $this->redisClientProvider->getRedisClient();
+    }
+
+    private function flushCluster(bool $all): Redis|bool
+    {
+        if (!$this->isCluster()) {
+            throw new BadMethodCallException('flushCluster can only be called on a Redis Cluster client');
+        }
+
+        $masters = $this->_masters();
+
+        $flushSuccess = true;
+        foreach ($masters as $master) {
+            $host = $master[0];
+            $port = $master[1];
+
+            $tempClient = new Redis();
+
+            try {
+                if ($tempClient->connect($host, $port, 0.5)) {
+                    if ($all) {
+                        $tempClient->flushAll();
+                    } else {
+                        $tempClient->flushDb();
+                    }
+                }
+            } catch (RedisException) {
+                $flushSuccess = false;
+            } finally {
+                if ($tempClient->isConnected()) {
+                    $tempClient->close();
+                }
+            }
+        }
+
+        return $flushSuccess;
+        if ($all) {
+            return $this->flushAll();
+        } else {
+            return $this->flushDb();
+        }
     }
 }

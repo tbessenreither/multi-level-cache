@@ -167,11 +167,9 @@ class KeyGeneratorServiceTest extends TestCase
         // Clear the cache
         $reflectionClass = new ReflectionClass(KeyGeneratorService::class);
         $cacheKeyPrefixCacheProperty = $reflectionClass->getProperty('cacheKeyPrefixCache');
-        $cacheKeyPrefixCacheProperty->setAccessible(true);
         $cacheKeyPrefixCacheProperty->setValue(null, []);
 
         $methodReflection = new ReflectionMethod(KeyGeneratorService::class, 'getCacheKeyPrefix');
-        $methodReflection->setAccessible(true);
         $prefix1 = $methodReflection->invoke(null, $methodCallObject);
         $this->assertEquals('test_service_a', $prefix1);
 
