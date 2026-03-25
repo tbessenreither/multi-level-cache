@@ -49,7 +49,6 @@ class MultiLevelCacheDataCollectorTest extends TestCase
         // simulate not collecting by directly setting data
         $ref = new ReflectionClass($collector);
         $property = $ref->getProperty('data');
-        $property->setAccessible(true);
         $property->setValue($collector, ['grouped_instances' => []]);
 
         // add instance should not do anything
@@ -242,7 +241,6 @@ class MultiLevelCacheDataCollectorTest extends TestCase
 
         $ref = new ReflectionClass($collector);
         $method = $ref->getMethod('getStatisticsObject');
-        $method->setAccessible(true);
         $stats = $method->invokeArgs($collector, ['nonexistent_group', 0]);
 
         $this->assertNull($stats);
@@ -261,7 +259,6 @@ class MultiLevelCacheDataCollectorTest extends TestCase
 
         $ref = new ReflectionClass($collector);
         $method = $ref->getMethod('getStatisticsObject');
-        $method->setAccessible(true);
         $stats = $method->invokeArgs($collector, ['valid_group', 7]);
 
         $this->assertNull($stats);

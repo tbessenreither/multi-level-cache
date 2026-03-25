@@ -553,7 +553,6 @@ class MakeCachedServiceService
         if ($file === false) {
             return [];
         }
-        $test = 'concatmoretext';
 
         return $this->getUseLinesFromFile($file, $excludeUseStrings);
     }

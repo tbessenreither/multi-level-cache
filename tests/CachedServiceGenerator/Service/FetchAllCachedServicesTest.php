@@ -61,7 +61,6 @@ class FetchAllCachedServicesTest extends TestCase
     {
         $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingVendorWithSrc';
         $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcDirByVendor');
-        $method->setAccessible(true);
         $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5/6/7/8/9', 5);
         $this->assertFalse($src);
     }
@@ -70,7 +69,6 @@ class FetchAllCachedServicesTest extends TestCase
     {
         $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingVendorWithSrc';
         $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcDirByVendor');
-        $method->setAccessible(true);
         $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
 
         $this->assertSame($sourceDir . '/src', $src);
@@ -80,7 +78,6 @@ class FetchAllCachedServicesTest extends TestCase
     {
         $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingVendorWithoutSrc';
         $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcDirByVendor');
-        $method->setAccessible(true);
         $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
 
         $this->assertFalse($src);
@@ -90,7 +87,6 @@ class FetchAllCachedServicesTest extends TestCase
     {
         $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingVendorWithSrc';
         $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcDirByVendor');
-        $method->setAccessible(true);
         $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
 
         $this->assertSame($sourceDir . '/src', $src);
@@ -100,7 +96,6 @@ class FetchAllCachedServicesTest extends TestCase
     {
         $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingComposerWithSrc';
         $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcByComposerJson');
-        $method->setAccessible(true);
         $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5/6/7/8/9', 5);
         $this->assertFalse($src);
     }
@@ -109,7 +104,6 @@ class FetchAllCachedServicesTest extends TestCase
     {
         $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingComposerWithSrc';
         $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcByComposerJson');
-        $method->setAccessible(true);
         $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
 
         $this->assertSame($sourceDir . '/src', $src);
@@ -119,7 +113,6 @@ class FetchAllCachedServicesTest extends TestCase
     {
         $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingComposerWithoutSrc';
         $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcByComposerJson');
-        $method->setAccessible(true);
         $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
 
         $this->assertFalse($src);
@@ -129,7 +122,6 @@ class FetchAllCachedServicesTest extends TestCase
     {
         $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingComposerWithSrc';
         $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcDir');
-        $method->setAccessible(true);
         $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
 
         $this->assertSame($sourceDir . '/src', $src);
@@ -139,7 +131,6 @@ class FetchAllCachedServicesTest extends TestCase
     {
         $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingVendorWithSrc';
         $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcDir');
-        $method->setAccessible(true);
         $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
 
         $this->assertSame($sourceDir . '/src', $src);
@@ -151,7 +142,6 @@ class FetchAllCachedServicesTest extends TestCase
 
         $sourceDir = __DIR__ . '/FetchAllCachedServicesTestStructure/ExistingVendorWithoutSrc';
         $method = new ReflectionMethod(FetchAllCachedServices::class, 'getSrcDir');
-        $method->setAccessible(true);
         $src = $method->invoke(null, $sourceDir . '/1/2/3/4/5');
     }
 }
